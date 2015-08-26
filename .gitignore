@@ -1,0 +1,10 @@
+EMADB.egg-info/
+build
+dist
+emadb/*.pyc
+emadb/*.pyo
+emadb/*~
+myconfig
+myemadb.sh
+*.db
+*~

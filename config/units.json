@@ -1,0 +1,27 @@
+# UNITS FILE FORMAT
+#
+# A list of units entries. 
+# Each unit is a list with the following fields:
+# ----------------------------
+#    [
+#        units_id (integer),
+#        units     (string),
+#    ], 
+# ----------------------------
+
+# units_id = 0 is reserved for the 'Unknown' unit
+
+[
+    [  0, "Unknown"     ],
+    [  1, "%"           ],            
+    [  2, "Open"        ],
+    [  3, "Closed"      ],
+    [  4, "Km/h"        ],
+    [  5, "degrees"     ],
+    [  6, "HPa"         ],
+    [  7, "Mv/arcsec^2" ],
+    [  8, "mm"          ],
+    [  9, "deg C"       ],
+    [ 10, "V"           ],
+    [ 11, "Hz"          ]
+]

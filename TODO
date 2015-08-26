@@ -1,0 +1,14 @@
+* GIT INIT !!! + primeros commits
+* ETL:
+  - bug rollover time. Usar datetimes + timedeltas(seconds=30)
+  - log.warn 0 en (date_id, time_id, sation_id, type_id)
+  - insercion de la tupla
+  - Usar Alarmable para commits peiodicos o algo simlar ?
+  - Parsear nuevo timestamp en los status messages
+* SCHEMA:
+  - nueva tabla de status messages + lags
+  - nueva unidad: secs (json + schema)
+* Servicio en Linux
+* Servicio en Windows
+* Instalador en Windows
+

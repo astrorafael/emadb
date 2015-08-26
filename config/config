@@ -1,0 +1,465 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+# ----------------------------------------------------------------------
+
+#========================================================================#
+#                      Generic configuration Data                        #
+#========================================================================#
+[GENERIC]
+
+# Perform syncronization of calibration constants at startup
+sync = True
+
+# Upload period (in seconds).
+# EMA measurements are accumulated and averaged during this period
+upload_period = 60
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+generic_log = INFO
+
+#------------------------------------------------------------------------#
+
+[SERIAL]
+# Serial Port Settings. Baud rate supported only 9600 & 57600
+serial_port = /dev/ttyAMA0
+serial_baud = 9600
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+serial_log = INFO
+
+#------------------------------------------------------------------------#
+
+[UDP]
+# Send EMA messages to PC  through udp_tx_port
+# Receive messages from PC through udp_rx_port
+#udp_tx_port = 849
+#udp_rx_port = 850
+udp_tx_port = 1025
+udp_rx_port = 1024
+
+# Enable multicasting EMA status messages to local network
+# Receiving from this multicast address is always enabled.
+mcast_enabled = False
+mcast_ip      = 225.100.20.15
+
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NONSET)
+udp_log = INFO
+
+#------------------------------------------------------------------------#
+
+# MQTT Client config
+
+# The unique id string used as the root name in topics (i.e EMA/#)
+# and also as part of the client_id when connecting to the broker.
+mqtt_id = EMA
+
+# Broker to connect
+mqtt_host = test.mosquitto.org
+
+# Connection port (unauthenticated)
+mqtt_port = 1883
+
+# Publishing period for real time, current measurements (in seconds)
+mqtt_period = 60
+
+# Publish historic data (24h)
+# in each active interval defined in TOD_Timer section
+mqtt_publish_history = yes
+
+# Publish Raw EMA status Line
+mqtt_publish_status = yes
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NONSET)
+mqtt_log = INFO
+
+#------------------------------------------------------------------------#
+
+[HTML]
+# Dynamic HTML page generated with current readings
+html_file = /var/www/ema.html
+
+# Page generation period in seconds
+html_period = 60
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+html_log = INFO
+
+#------------------------------------------------------------------------#
+
+[TOD_TIMER]
+# Time of day timer keeps a list of active window to
+# do thins like sending historic 24 data and programming the aux relay for
+# powering on/off
+# At minimun, one active interval should be defined and should be at least 
+# 15 minutes long
+
+# Publish current active or inactive interval
+tod_publish_what = current
+
+# Where to publish intervals
+# Comma list separated values with no single or double quotes
+tod_publish_where = mqtt
+
+# Set to true to shutdown the host computer
+# a couple of minites before the aux relay actualy switch off
+tod_poweroff = no
+
+# List of comma-separated intervals hh1:mm1-hh2:mm2
+# Time given in UTC Time.
+tod_intervals = 12:00-12:15,20:00-20:15
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+tod_log = INFO
+
+
+#========================================================================#
+#                      Sensor configuration Data                         #
+#========================================================================#
+
+[WATCHDOG]
+# EMA keep alive limit [seconds]
+# When times out, the roof relay is switched off
+# The program sends a keepalive message every keepalive/2 seconds
+keepalive = 200
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+wdog_log = INFO
+
+#------------------------------------------------------------------------#
+
+[RTC]
+# Max difference to synchronize time [seconds].
+# Delays in TX Serial output queue (1 sec, at least) 
+# prevents to have seconds accuarcy
+rtc_delta  = 5
+
+# Synchronization period [hours]
+# Recommended at least once per day        
+rtc_period = 12   
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+rtc_log = INFO
+
+#------------------------------------------------------------------------#
+
+[VOLTMETER]
+
+# Volt offset [V]
+# Offset to ADC for proper calibration
+volt_offset = 0.0
+
+# Low voltage threshold [V]
+# This threshold is managed by the EMA hardware and closes relays
+# if relays are set in automatic mode
+volt_thres = 11.8 
+
+# The EMA service will execute a script if the average voltage
+# value reported by EMA in status messages during 'volt_time' 
+# secconds falls below 'volt_thres' + 'volt_delta'
+
+# Low voltage thrshold delta [V]
+# Volts above vlot_threshold to allow a safety marging for
+# emeregency actions before relays switch off
+volt_delta = 0.2
+
+# Time [seconds] to average voltage readings.
+# Note 'volt_time' should be less than 'upload_period' (see above)
+volt_time = 30
+
+# List of comma separated scripts to execute on low voltage 
+# Each script should show the full path. 
+# leave empty if not used
+low_volt_script = /home/pi/nto/ema/scripts/volt-script
+
+# Script mode: (Never, Once, Many)
+# When launched mutiple times, EMA server does not lauch a script
+# till the previous run is over
+low_volt_mode = Once
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+volt_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+volt_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+volt_log = INFO
+
+#------------------------------------------------------------------------#
+
+[BAROMETER]
+
+# Observer height above sea level [m]
+barom_height = 700
+
+# Barometer offeset [mBar]
+barom_offset = -19
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+barom_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+barom_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+barom_log = INFO
+
+#------------------------------------------------------------------------#
+
+# Rain detection sensor
+[RAIN]
+
+# Rain threshold to close roof (0..9) [%]
+rain_thres = 1
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+rain_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+rain_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+rain_log = INFO
+
+#------------------------------------------------------------------------#
+
+# Peltier-based cloud sensor
+[CLOUD]
+# Adj. Gain
+pelt_gain = 1.0
+
+# Threshold to close roof relay [%]
+pelt_thres = 67
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+pelt_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+pelt_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+pelt_log = INFO
+
+#------------------------------------------------------------------------#
+# Pyranometer device, measuring solar radiation
+[PYRANOMETER]
+pyr_gain   = 1.6
+pyr_offset = 0
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+pyr_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+pyr_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+pyr_log = INFO
+
+#------------------------------------------------------------------------#
+
+# Unihedron-like, wide field photometer measuring night visual magnitude.
+[PHOTOMETER]
+# Calibration offset [visual mag.]
+phot_offset = -0.5
+
+# Threshold to close roof relay [visual mag.]
+phot_thres  = 10.5
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+phot_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+phot_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+phot_log = INFO
+
+#------------------------------------------------------------------------#
+
+# Themometer measuring ambient Temperature and dew point 
+[THERMOMETER]
+
+# Threshold temperature above dew point.
+# If ambient temperature < (dew point + delta_thres)
+# the roof relay will close.
+delta_thres = 5.0
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+thermo_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+thermo_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+thermo_log = INFO
+
+
+#------------------------------------------------------------------------#
+# Mechanical Anemometer
+[ANEMOMETER]
+
+# Calibration value to yield readings in Km/h [units?]
+anem_calib = 36
+
+# Anemometer type. Allowed values: (TX20, Simple)
+anem_type = TX20
+
+# Theshold for instataneous wind speed [Km/h]
+# instantaneous wind speed > wind_thres will close the roof relay
+wind_thres = 20
+
+# Theshold for average wind speed [Km/h] made on 10 min. period
+# avergae wind speed > wind_thres10 will close the roof relay
+wind_thres10 = 66
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+anem_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+anem_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+anem_log = INFO
+
+
+#------------------------------------------------------------------------#
+# Pluviometer (Rain Gauge) sensor
+[PLUVIOMETER]
+# Contsant to give readiongs in litres.
+pluv_calib = 124
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+pluv_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+pluv_publish_what = current,average
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+pluv_log = INFO
+
+
+#------------------------------------------------------------------------#
+# Thermopile sensor (alternative way to detect clouds)
+[THERMOPILE]
+
+# Where to publish measurements
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+thermop_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+thermop_relay_publish_what = current,average        
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+thermop_log = INFO
+
+#========================================================================#
+#                      Actuator configuration Data                       #
+#========================================================================#
+
+#------------------------------------------------------------------------#
+# Roof relay
+[ROOF_RELAY]
+
+# List of comma separated scripts to execute  
+# on change of roof relay switch 
+# Each script should show the full path. 
+# leave empty if not used
+roof_relay_script = /home/pi/nto/ema/scripts/roof-script
+
+# Script mode: (Never, Once, Many)
+# When launched mutiple times, EMA server does not lauch a script
+# till the previous run is over
+roof_relay_mode = Many
+
+# Where to publish relay state
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+roof_relay_publish_where = mqtt,html
+
+# What to publish: current, average or both
+# comma-separated list with no quotes or single quotes
+roof_relay_publish_what = current        
+
+#------------------------------------------------------------------------#
+# Auxiliar relay
+[AUX_RELAY]
+# Flag. Open/close relay mode 
+# 'Auto'   = automatic based on dew point
+# 'Manual' = manual, by explicit commands
+# 'Timed'  = Timed, with On/Off hour:minute
+aux_mode = Timed
+
+# List of comma separated scripts to execute  
+# on change of aux relay switch 
+# Each script should show the full path. 
+# leave empty if not used
+aux_relay_script = /path/to/my/script
+
+# Script mode: (Never, Once, Many)
+# When launched# Publish Raw EMA status Line
+mqtt_publish_where_status = yes
+ mutiple times, EMA server does not lauch a script
+# till the previous run is over
+aux_relay_mode = Never
+
+# Where to publish relay state
+# Comma list separated values with no quotes or single quotes
+# Allowed values: html, mqtt  (or just leave a blank line)
+aux_relay_publish_where = mqtt,html
+
+# What to publish: current, average or both 
+# comma-separated list with no quotes or single quotes
+aux_relay_publish_what = current
+
+# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+# shared with roof_relay
+aux_relay_log = INFO
