@@ -1,2 +1,2 @@
 #!/bin/bash
-python -OO -m emadb -k -c /etc/default/emadb
+python -OO -m emadb -k -c /etc/emadb/config

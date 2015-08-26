@@ -31,9 +31,7 @@ cp -vf emadb.init.sh /etc/init.d/emadb
 chmod 0755 /etc/init.d/emadb
 
 # Add service defaults file if it does not exist
-if [ ! -f "/etc/default/emadb" ]; then
-    cp -vf default /etc/default/emadb
-fi
+cp -vf default /etc/default/emadb
 
 # Adding utlity scripts
 cp -vf scripts/emadb.sh  /usr/local/bin/emadb

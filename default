@@ -22,10 +22,10 @@
 # ----------------------------------------------------------------------
 
 # Config file path for the EMA Service
-CONFIG_FILE="/etc/ema/config"
+CONFIG_FILE="/etc/emadb/config"
 
 # Log file path for the EMA service
-LOG_FILE="/var/log/emad.log"
+LOG_FILE="/var/log/emadb.log"
 
 # set to "-s" "--by-size" when rotating by size, else set to empty string
 BY_SIZE=""

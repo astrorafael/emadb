@@ -26,7 +26,7 @@
 #========================================================================#
 [GENERIC]
 
-# component log level (DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
+# component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
 generic_log = INFO
 
 #------------------------------------------------------------------------#
@@ -48,7 +48,7 @@ mqtt_port = 1883
 mqtt_period = 60
 
 # MQTT topics to subscribe
-mqtt_topics= EMA/+/history/minmax,EMA/+/current/status
+mqtt_topics= EMA/+/history/minmax , EMA/+/current/status
 
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NONSET)
 mqtt_log = INFO
@@ -62,7 +62,7 @@ mqtt_log = INFO
 dbase_file = emahistory.db
 
 # Directory where JSON data is located
-dbase_json_dir = config
+dbase_json_dir = /etc/emadb
 
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
 dbase_log = DEBUG
