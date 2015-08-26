@@ -39,7 +39,7 @@ MAX_BYTES=1000000
 # and status_of_proc is working.
 . /lib/lsb/init-functions
 
-DAEMON_ARGS="-m emadb -l $LOG_FILE $BY_SIZE -m $MAX_SIZE -c $CONFIG_FILE"
+DAEMON_ARGS="-m emadb --log-file $LOG_FILE $BY_SIZE --max-size $MAX_BYTES --config $CONFIG_FILE"
 
 #
 # Function that starts the daemon/service
