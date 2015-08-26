@@ -30,7 +30,7 @@ VERSION_STRING = "EMADB/%s/Python %d.%d" % (VERSION,
                                          sys.version_info.major, 
                                          sys.version_info.minor)
 
-# Default server values are stored in /etc/default/emadbd
+# Default server values are stored in /etc/default/emadb
 CONFIGFILE="/etc/emadb/config"
 
 
