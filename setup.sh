@@ -21,28 +21,24 @@ fi
 
 for file in config stations.json units.json
 do
-    echo "Copying $file into /etc/emadb ..."
     cp -vf config/$file /etc/emadb/
     chmod 0644 /etc/emadb/$file
 done
 
 # Add service/daemon script if it does not exists
 echo "Installing service script..."
-cp -vf emad.init.sh /etc/init.d/emadb
+cp -vf emadb.init.sh /etc/init.d/emadb
 chmod 0755 /etc/init.d/emadb
 
 # Add service defaults file if it does not exist
 if [ ! -f "/etc/default/emadb" ]; then
-    echo "Copying defaults for emadb service script ..."
     cp -vf default /etc/default/emadb
 fi
 
 # Adding utlity scripts
-echo "Copying emadb into /usr/local/bin ..."
 cp -vf scripts/emadb.sh  /usr/local/bin/emadb
 chmod 0755 /usr/local/bin/emadb
 
-echo "Copying emadbloader into /usr/local/bin ..."
 cp -vf scripts/emadbloader.py  /usr/local/bin/emadbloader
 chmod 0755 /usr/local/bin/emadbloader
 
