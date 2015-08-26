@@ -1,8 +1,8 @@
 * ETL:
 * SCHEMA:
   - nueva tabla de status messages + lags
-  - nueva unidad: secs (json + schema)
-* Servicio en Linux
 * Servicio en Windows
 * Instalador en Windows
-
+* Interesante para la Pi SD card block size
+  https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
+  http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
