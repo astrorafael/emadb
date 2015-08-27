@@ -41,15 +41,22 @@ chmod 0755 /etc/init.d/emadb
 # (be polite with with your existing configurations)
 # --------------------------------------------------
 
+
 echo
 echo "--------------------------"
 echo "Copying emadb config files"
 echo "--------------------------"
 
 
+if [ ! -d "/var/dbase" ]; then
+    echo "creating /var/dbase as the default database directory"
+    mkdir /var/dbase 2>/dev/null 1>/dev/null
+fi
+
 # python config file and JSON files
 
 if [ ! -d "/etc/emadb" ]; then
+    echo "creating /etc/emadb as the default config directory"
     mkdir /etc/emadb 2>/dev/null 1>/dev/null
 fi
 
