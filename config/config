@@ -59,7 +59,7 @@ mqtt_log = INFO
 [DBASE]
 
 # Full Database Path File Name
-dbase_file = emahistory.db
+dbase_file = /var/dbase/emahistory.db
 
 # Directory where JSON data is located
 dbase_json_dir = /etc/emadb

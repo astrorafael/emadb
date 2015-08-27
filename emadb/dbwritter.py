@@ -314,7 +314,8 @@ class DBWritter(Lazy):
       log.setLevel(lvl)
       dbfile    = parser.get("DBASE", "dbase_file")
       json_dir  = parser.get("DBASE", "dbase_json_dir")
-      Lazy.__init__(self, 10*60)
+      period    = parser.getint("DBASE", "dbase_period")
+      Lazy.__init__(self, period*60)
       self.ema        = ema
       self.__conn     = None
       self.__rows     = []      # acumulating status msg rows
