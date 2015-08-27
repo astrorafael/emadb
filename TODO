@@ -1,7 +1,9 @@
 * ETL:
- - overlapping parcial de rows ¿ como oo hacemos ?
+ - Implementar una cola entre el mqttclient y el dbwritter
+  con un flag on_hold
+ - implementar el mecanismo de reload con una signal
 * SCHEMA:
-  - nueva tabla de status messages + lags
+  - tabla de  messages cada 5 minutos
 * INFORMES
   - ultimos 10 maximas voltages con sus unidades
   - ultimos 10 minmas voltages con susu unidades

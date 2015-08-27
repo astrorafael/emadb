@@ -461,7 +461,7 @@ class MinMaxHistory(object):
 
 
     def table(self):
-        '''Create the SQLite Units table'''
+        '''Create the SQLite MinMaxHistory table'''
         log.info("Creating MinMaxHistory Table if not exists")
         self.__cursor.executescript(
             """
@@ -505,6 +505,69 @@ class MinMaxHistory(object):
         )
 
 
+# ============================================================================ #
+#                   REAL TIME SAMPLES TABLE (PERIODIC SNAPSHOT FACT)
+# ============================================================================ #
+
+class RealTimeSamples(object):
+    
+    def __init__(self, conn):
+        '''Create the SQLite RealTimeSamples Table'''
+        self.__cursor  = conn.cursor()
+        self.__conn  = conn
+
+
+    def generate(self):
+        self.table()
+        self.__conn.commit()
+
+
+    def table(self):
+        '''Create the SQLite Units table'''
+        log.info("Creating RealTimeSamples Table if not exists")
+        self.__cursor.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS RealTimeSamples
+            (
+            date_id                 INTEGER NOT NULL REFERENCES Date(date_id), 
+            time_id                 INTEGER NOT NULL REFERENCES Time(time_id), 
+            station_id          INTEGER NOT NULL REFERENCES Station(station_id),
+            roof_relay_id           INTEGER NOT NULL REFERENCES Units(units_id),
+            aux_relay_id            INTEGER NOT NULL REFERENCES Units(units_id),
+            voltage                 REAL    NOT NULL,
+            voltage_units_id        INTEGER NOT NULL REFERENCES Units(units_id),
+            rain_probability        REAL    NOT NULL,
+            rain_prob_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
+            clouds_level            REAL    NOT NULL,
+            clouds_level_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
+            cal_pressure            REAL    NOT NULL,
+            cal_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
+            abs_pressure            REAL    NOT NULL,
+            abs_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
+            rain_level              REAL    NOT NULL,
+            rain_level_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
+            irradiantion            REAL    NOT NULL,
+            irradiantion_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
+            magnitude               REAL    NOT NULL,
+            magnitude_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
+            temperature             REAL    NOT NULL,
+            temperature_units_id    INTEGER NOT NULL REFERENCES Units(units_id),
+            humidity                REAL    NOT NULL,
+            humidity_units_id       INTEGER NOT NULL REFERENCES Units(units_id),
+            dew_point               REAL    NOT NULL,
+            dew_point_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
+            wind_speed              REAL    NOT NULL,
+            wind_speed_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
+            wind_direction          INTEGER NOT NULL,
+            wind_direction_units_id INTEGER NOT NULL REFERENCES Units(units_id),
+            lag                     INTEGER NOT NULL,
+            lag_units_id            INTEGER NOT NULL REFERENCES Units(units_id),
+            PRIMARY KEY (date_id, time_id, station_id)
+            );
+            """
+        )
+
+
 def generate(connection, json_dir, replace=False):
     '''Schema Generation. The main function'''
     Date(connection).generate(replace)
@@ -513,6 +576,7 @@ def generate(connection, json_dir, replace=False):
     MeasurementType(connection).generate(replace)
     Units(connection,json_dir).generate(replace)
     MinMaxHistory(connection).generate()
+    RealTimeSamples(connection).generate()
 
 if __name__ == "__main__":
     import logger

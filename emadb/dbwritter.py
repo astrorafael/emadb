@@ -32,6 +32,7 @@ import schema
 import re
 import os
 import datetime
+import operator
 
 from server import Lazy, Server
 
@@ -157,11 +158,154 @@ def xtWindDirection(message):
    return int(message[SWDB:SWDE])
 
 
+# ===================
+# MinMaxHistory Class
+# ===================
+
+class MinMaxHistory(object):
+
+   def __init__(self, conn):
+      self.__conn     = conn
+      self.__cursor   = self.__conn.cursor()
+      self.__rowcount = self.rowcount()
+      log.debug("MinMaxHistory object created")
+
+   def rowcount(self):
+      '''Find out the current row count'''
+      self.__cursor.execute("SELECT count(*) FROM MinMaxHistory")
+      return self.__cursor.fetchone()[0]
+
+   def insert(self, rows):
+      '''Update the MinMaxHistory Fact Table'''
+      log.info("Update MinMaxHistory Table data")
+      try:
+         self.__cursor.executemany(
+            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            rows)
+      except sqlite3.IntegrityError, e:
+         log.warn("Overlapping rows")  
+      except sqlite3.Error, e:
+         log.error(e)
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+      rc = self.rowcount()
+      log.info("commited Rows (%d/%d)", rc - self.__rowcount, len(rows))
+      self.__rowcount = rc
+
+   def row(self, date_id, time_id, station_id, message, paren):
+      '''Produces one row to be inserted into the database'''
+      return (
+         date_id,               # date_id
+         time_id,               # time_id
+         station_id,            # station_id
+         paren.lkType(xtMeasType(message)),   # type_id
+         paren.lkUnits(xtRoofRelay(message)), # roof_relay_id
+         paren.lkUnits(xtAuxRelay(message)),  # aux_relay_id
+         xtVoltage(message),                  # voltage
+         paren.lkUnits('V'),                  # voltage_units_id
+         xtRainProbability(message),          # rain_probability
+         paren.lkUnits('%'),                  # rain_proability_units_id
+         xtCloudLevel(message),               # clouds_level
+         paren.lkUnits('%'),                  # clouds_level_units_id
+         xtCalPressure(message),              # cal_pressure
+         paren.lkUnits('HPa'),                # call_pressure_units_id
+         xtAbsPressure(message),              # abs_pressure
+         paren.lkUnits('HPa'),                # abs_pressure_units_id
+         xtRainLevel(message),                # rain_level
+         paren.lkUnits('mm'),                 # rain_level_units_id
+         xtIrradiation(message),              # irradiation
+         paren.lkUnits('%'),                  # irradiation_units_id
+         xtMagnitude(message),                # magnitude
+         paren.lkUnits('Hz'),                 # magnitude_units_id
+         xtTemperature(message),              # temperature
+         paren.lkUnits('deg C'),              # temperature_units_id
+         xtHumidity(message),                 # humidity
+         paren.lkUnits('%'),                  # humidity_units_id
+         xtDewPoint(message),                 # dew_point
+         paren.lkUnits('deg C'),              # dew_point_units_id
+         xtWindSpeed(message),                # wind_speed
+         paren.lkUnits('Km/h'),               # wind_speed_units_id
+         xtWindDirection(message),            # wind_direction
+         paren.lkUnits('degrees'),            # wind_direction_units_id
+         )
+
+
+# =====================
+# RealTimeSamples Class
+# =====================
+
+class RealTimeSamples(object):
+
+   def __init__(self, conn):
+      self.__conn     = conn
+      self.__cursor   = self.__conn.cursor()
+      self.__rowcount = self.rowcount()
+      log.debug("RealTimeSamples object created")
+
+   def rowcount(self):
+      '''Find out the current row count'''
+      self.__cursor.execute("SELECT count(*) FROM RealTimeSamples")
+      return self.__cursor.fetchone()[0]
+
+   def insert(self, rows):
+      '''Update the RealTimeSamples Fact Table'''
+      log.info("Update RealTimeSamples Table data")
+      try:
+         self.__cursor.executemany(
+            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            rows)
+      except sqlite3.IntegrityError, e:
+         log.warn("Overlapping rows")  
+      except sqlite3.Error, e:
+         log.error(e)
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+      rc = self.rowcount()
+      log.info("commited Rows (%d/%d)", rc - self.__rowcount, len(rows))
+      self.__rowcount = rc
+
+   def row(self, date_id, time_id, station_id, lag, message, paren):
+      '''Produces one row to be inserted into the database'''
+      return (
+         date_id,               # date_id
+         time_id,               # time_id
+         station_id,            # station_id
+         paren.lkUnits(xtRoofRelay(message)), # roof_relay_id
+         paren.lkUnits(xtAuxRelay(message)),  # aux_relay_id
+         xtVoltage(message),                 # voltage
+         paren.lkUnits('V'),                  # voltage_units_id
+         xtRainProbability(message),         # rain_probability
+         paren.lkUnits('%'),                  # rain_proability_units_id
+         xtCloudLevel(message),              # clouds_level
+         paren.lkUnits('%'),                  # clouds_level_units_id
+         xtCalPressure(message),             # cal_pressure
+         paren.lkUnits('HPa'),                # call_pressure_units_id
+         xtAbsPressure(message),             # abs_pressure
+         paren.lkUnits('HPa'),                # abs_pressure_units_id
+         xtRainLevel(message),               # rain_level
+         paren.lkUnits('mm'),                 # rain_level_units_id
+         xtIrradiation(message),             # irradiation
+         paren.lkUnits('%'),                  # irradiation_units_id
+         xtMagnitude(message),               # magnitude
+         paren.lkUnits('Hz'),                 # magnitude_units_id
+         xtTemperature(message),             # temperature
+         paren.lkUnits('deg C'),              # temperature_units_id
+         xtHumidity(message),                # humidity
+         paren.lkUnits('%'),                  # humidity_units_id
+         xtDewPoint(message),                # dew_point
+         paren.lkUnits('deg C'),              # dew_point_units_id
+         xtWindSpeed(message),               # wind_speed
+         paren.lkUnits('Km/h'),               # wind_speed_units_id
+         xtWindDirection(message),           # wind_direction
+         paren.lkUnits('degrees'),            # wind_direction_units_id
+         lag,                                # lag
+         paren.lkUnits('sec'),                # lag_units_id
+         )
+
+
 # ==========
 # Main Class
 # ==========
-
-
 
 class DBWritter(Lazy):
 
@@ -184,6 +328,8 @@ class DBWritter(Lazy):
             self.__conn.rollback()
          raise
       ema.addLazy(self)
+      self.minmax = MinMaxHistory(self.__conn)
+      self.realtime = RealTimeSamples(self.__conn)
       log.info("DBWritter object created")
 
    # -----------
@@ -191,7 +337,7 @@ class DBWritter(Lazy):
    # -----------
 
    def processMinMax(self, mqtt_id, payload):
-      '''Called to updated MinMax History Table'''
+      '''extract MinMax History data and load into its table'''
       log.debug("Received minmax message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
@@ -201,14 +347,19 @@ class DBWritter(Lazy):
       message = payload.split('\n')
       for i in range(0 , len(message)/3):
          date_id, time_id, dummy = xtDateTime(message[3*i+2])
-         r = self.row(date_id, time_id, station_id, message[3*i])
+         r = self.minmax.row(date_id, time_id, station_id, message[3*i], self)
          rows.append(r)
-         r = self.row(date_id, time_id, station_id, message[3*i+1])
+         r = self.minmax.row(date_id, time_id, station_id, message[3*i+1], self)
          rows.append(r)
-      self.ldMinMaxHistory(rows, update=True)
+      # It seemd there is no need to sort the dates
+      # non-overlapping data do get written anyway 
+      #rows = sorted(rows, key=operator.itemgetter(0,1), reverse=True)
+
+      self.minmax.insert(rows)
 
 
    def processStatus(self, mqtt_id, payload):
+      '''Extract real time EMA status message and stor it into its table'''
       t1 = datetime.datetime.utcnow()
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
@@ -216,70 +367,17 @@ class DBWritter(Lazy):
          return
       message = payload.split('\n')
       date_id, time_id, t0 = xtDateTime(message[1])
-      delta_t = (t1 - t0).total_seconds()
+      lag = (t1 - t0).total_seconds()
       log.debug( "t1 = %s, t0 = %s", t1, t0)
       log.debug("Received status message from station %s (lag = %d)",
-                mqtt_id, delta_t)
-      r = self.row(date_id, time_id, station_id, message[0])
-      self.__rows.append(r)
+                mqtt_id, lag)
+      r = self.realtime.row(date_id, time_id, station_id, lag, message[0], self)
+      self.__rows.insert(0,r)   # more recent at the beginning
 
 
    def processSamples(self, mqtt_id, payload):
       log.debug("Received samples message from station %s", mqtt_id)
 
-
-   def row(self, date_id, time_id, station_id, message):
-      '''Produces one row to be inserted into the database'''
-      return (
-         date_id,               # date_id
-         time_id,               # time_id
-         station_id,            # station_id
-         self.lkType(xtMeasType(message)), # type_id
-         self.lkUnits(xtRoofRelay(message)), # roof_relay_id
-         self.lkUnits(xtAuxRelay(message)),  # aux_relay_id
-         xtVoltage(message),                 # voltage
-         self.lkUnits('V'),                  # voltage_units_id
-         xtRainProbability(message),         # rain_probability
-         self.lkUnits('%'),                  # rain_proability_units_id
-         xtCloudLevel(message),              # clouds_level
-         self.lkUnits('%'),                  # clouds_level_units_id
-         xtCalPressure(message),             # cal_pressure
-         self.lkUnits('HPa'),                # call_pressure_units_id
-         xtAbsPressure(message),             # abs_pressure
-         self.lkUnits('HPa'),                # abs_pressure_units_id
-         xtRainLevel(message),               # rain_level
-         self.lkUnits('mm'),                 # rain_level_units_id
-         xtIrradiation(message),             # irradiation
-         self.lkUnits('%'),                  # irradiation_units_id
-         xtMagnitude(message),               # magnitude
-         self.lkUnits('Hz'),                 # magnitude_units_id
-         xtTemperature(message),             # temperature
-         self.lkUnits('deg C'),              # temperature_units_id
-         xtHumidity(message),                # humidity
-         self.lkUnits('%'),                  # humidity_units_id
-         xtDewPoint(message),                # dew_point
-         self.lkUnits('deg C'),              # dew_point_units_id
-         xtWindSpeed(message),               # wind_speed
-         self.lkUnits('Km/h'),               # wind_speed_units_id
-         xtWindDirection(message),           # wind_direction
-         self.lkUnits('degrees'),            # wind_direction_units_id
-         )
-
-
-   def ldMinMaxHistory(self, rows, update=False):
-      '''Populate the SQLite Station Table'''
-      if update:
-         log.info("Update MinMaxHistory Table data")
-         try:
-            self.__cursor.executemany(
-               "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
-               rows)
-         except sqlite3.Error, e:
-            log.error(e)
-         log.warn("commited Rows (%d/%d)", self.__cursor.rowcount, len(rows))
-         self.__conn.commit()   # commit anyway what was really updated
-      else:
-         log.debug("Skiping MinMaxHistory update for %d rows", len(rows))
 
    # ----------------------------
    # Implement The Lazy interface 
@@ -291,7 +389,7 @@ class DBWritter(Lazy):
       Write blocking behaviour.
       '''
       log.debug("work()")
-      self.ldMinMaxHistory(self.__rows, update=False)
+      self.realtime.insert(self.__rows)
       self.__rows = []
 
    # ------------------------------------

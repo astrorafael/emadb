@@ -105,7 +105,7 @@ class MQTTClient(Lazy):
      '''Send the initial event and set last will on unexpected diconnection'''
      if rc == 0:
        self.__state = CONNECTED
-       log.info("Conected successfully") 
+       log.info("Connected successfully") 
        log.info("Subscribing to topics %s", self.__topics) 
        self.__mqtt.subscribe(self.__topics)
      else:
