@@ -4,7 +4,7 @@
 # Only needed for standalone deployment
 # I use Ansible, instead
 
-# Preresuisites python2.7 and setuptools
+# Prerequisites python2.7 and setuptools
 
 echo
 echo "------------------------"
