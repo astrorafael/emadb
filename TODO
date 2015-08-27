@@ -1,6 +1,4 @@
 * ETL:
- - Implementar una cola entre el mqttclient y el dbwritter
-  con un flag on_hold
  - implementar el mecanismo de reload con una signal
 * SCHEMA:
   - tabla de  messages cada 5 minutos
