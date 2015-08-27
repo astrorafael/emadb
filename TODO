@@ -1,4 +1,5 @@
 * ETL:
+ - overlapping parcial de rows ¿ como oo hacemos ?
 * SCHEMA:
   - nueva tabla de status messages + lags
 * INFORMES
