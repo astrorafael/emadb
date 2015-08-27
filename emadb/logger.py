@@ -27,27 +27,39 @@
 # 1) To create the root logger object, at initialization time
 # 2) to create a console formatter and a file formatter
 # to be used as options when the server is started
+# 3) Add a verbose log level method on the fly
 #
 # ======================================================================
 
 import logging
 from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 
+# ----------------------
 # Adding a VERBOSE Level
-# usage:
-#   log = logging.getLogger('foo')
-#   log.log(VERBOSE, "bla, bla")
+# ----------------------
 
+# Register new level
 VERBOSE = 5
-logging.addLevelName(5,"VERBOSE")
-    
+logging.addLevelName(VERBOSE,"VERBOSE")
+
+# Add new method to logging.Logger class on the fly
+def verbose(self, *opts):
+    self.log(VERBOSE, *opts)
+logging.Logger.verbose = verbose
+
+# ------------
 # File formats
+# ------------
+
 CONSOLE_FORMAT = '[%(levelname)7s] %(name)9s - %(message)s'
 FILE_FORMAT    = '%(asctime)s [%(levelname)7s] - %(name)9s %(message)s'
 
 ROOT = logging.getLogger()
 ROOT.setLevel(logging.INFO)
 
+# ------------------
+# Exported Functions
+# ------------------
 
 def logToConsole():
     formatter = logging.Formatter(fmt=CONSOLE_FORMAT)

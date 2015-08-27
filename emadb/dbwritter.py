@@ -34,7 +34,6 @@ import os
 import datetime
 
 from server import Lazy, Server
-from logger import VERBOSE
 
 # Relays
 from emaproto  import SRRB, SARB
@@ -304,7 +303,7 @@ class DBWritter(Lazy):
       self.__cursor.execute("SELECT type_id FROM Type WHERE type=?",
                             (meas_type,))
       meas_id = self.__cursor.fetchone() or (0,)
-      log.log(VERBOSE, "lkType(%s) => %s", meas_type, meas_id)
+      log.verbose("lkType(%s) => %s", meas_type, meas_id)
       return meas_id[0]
 
 
@@ -313,7 +312,7 @@ class DBWritter(Lazy):
       self.__cursor.execute("SELECT station_id FROM Station WHERE mqtt_id=?",
                             (mqtt_id,))
       station_id = self.__cursor.fetchone() or (0,)
-      log.log(VERBOSE, "lkStation(%s) => %s", mqtt_id, station_id)
+      log.verbose("lkStation(%s) => %s", mqtt_id, station_id)
       return station_id[0]
 
 
@@ -322,7 +321,7 @@ class DBWritter(Lazy):
       self.__cursor.execute("SELECT units_id FROM Units WHERE units=?",
                             (units,))
       units_id = self.__cursor.fetchone() or (0,)
-      log.log(VERBOSE, "lkUnits(%s) => %s", units, units_id)
+      log.verbose("lkUnits(%s) => %s", units, units_id)
       return units_id[0]
 
    # -------------------------------
