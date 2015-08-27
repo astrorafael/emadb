@@ -272,33 +272,33 @@ class RealTimeSamples(object):
          station_id,            # station_id
          paren.lkUnits(xtRoofRelay(message)), # roof_relay_id
          paren.lkUnits(xtAuxRelay(message)),  # aux_relay_id
-         xtVoltage(message),                 # voltage
+         xtVoltage(message),                  # voltage
          paren.lkUnits('V'),                  # voltage_units_id
-         xtRainProbability(message),         # rain_probability
+         xtRainProbability(message),          # rain_probability
          paren.lkUnits('%'),                  # rain_proability_units_id
-         xtCloudLevel(message),              # clouds_level
+         xtCloudLevel(message),               # clouds_level
          paren.lkUnits('%'),                  # clouds_level_units_id
-         xtCalPressure(message),             # cal_pressure
+         xtCalPressure(message),              # cal_pressure
          paren.lkUnits('HPa'),                # call_pressure_units_id
-         xtAbsPressure(message),             # abs_pressure
+         xtAbsPressure(message),              # abs_pressure
          paren.lkUnits('HPa'),                # abs_pressure_units_id
-         xtRainLevel(message),               # rain_level
+         xtRainLevel(message),                # rain_level
          paren.lkUnits('mm'),                 # rain_level_units_id
-         xtIrradiation(message),             # irradiation
+         xtIrradiation(message),              # irradiation
          paren.lkUnits('%'),                  # irradiation_units_id
-         xtMagnitude(message),               # magnitude
+         xtMagnitude(message),                # magnitude
          paren.lkUnits('Hz'),                 # magnitude_units_id
-         xtTemperature(message),             # temperature
+         xtTemperature(message),              # temperature
          paren.lkUnits('deg C'),              # temperature_units_id
-         xtHumidity(message),                # humidity
+         xtHumidity(message),                 # humidity
          paren.lkUnits('%'),                  # humidity_units_id
-         xtDewPoint(message),                # dew_point
+         xtDewPoint(message),                 # dew_point
          paren.lkUnits('deg C'),              # dew_point_units_id
-         xtWindSpeed(message),               # wind_speed
+         xtWindSpeed(message),                # wind_speed
          paren.lkUnits('Km/h'),               # wind_speed_units_id
-         xtWindDirection(message),           # wind_direction
+         xtWindDirection(message),            # wind_direction
          paren.lkUnits('degrees'),            # wind_direction_units_id
-         lag,                                # lag
+         lag,                                 # lag
          paren.lkUnits('sec'),                # lag_units_id
          )
 

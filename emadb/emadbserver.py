@@ -44,7 +44,14 @@ class EMADBServer(server.Server):
         
         def __init__(self, configfile=None):
             server.Server.__init__(self)
+            self.__queue = {
+                    'minmax':  [] ,
+                    'status':  [] ,
+                    'samples': [] ,
+            }
+            self.__stopped = False
             self.buildFrom(configfile)
+            
 
         def buildFrom(self, configfile):
 		'''Buld children objects from configuration file'''
@@ -58,11 +65,60 @@ class EMADBServer(server.Server):
 		config.optionxform = str
 		config.read(configfile)
 
+                # Set own config options
+                log.setLevel(config.get("GENERIC", "generic_log"))
+                self.hold(config.getboolean("GENERIC", "on_hold"))
+
 		# DBWritter object 
 		self.dbwritter = dbwritter.DBWritter(self, config)
 				
 		# MQTT Driver object 
 		self.mqttclient = mqttclient.MQTTClient(self, config)
+
+        # --------------
+        # Queue Handing
+        # -------------
+
+
+        def hold(self, flag):
+                '''
+                Stop/Resume enqueing messages from the queue'''
+                self.__stopped = flag
+                log.info("on hold = %s", flag)
+
+
+        def onMinMaxMessage(self, mqtt_id, payload):
+                self.__queue['minmax'].append((mqtt_id, payload))
+                if self.__stopped:
+                        log.warning("Holding %d minmax messages on queue",
+                                    len(self.__queue['minmax']))
+                        return
+                while len(self.__queue['minmax']):
+                        item = self.__queue['minmax'].pop(0)
+                        self.dbwritter.processMinMax(item[0], item[1])
+
+
+        def onStatusMessage(self, mqtt_id, payload):
+                self.__queue['status'].append((mqtt_id, payload))
+                if self.__stopped:
+                        log.warning("Holding %d status messages on queue",
+                                    len(self.__queue['status']))
+                        return
+                while len(self.__queue['status']):
+                        item = self.__queue['status'].pop(0)
+                        self.dbwritter.processStatus(item[0], item[1])
+
+
+        def onSamplesMessage(self, mqtt_id, payload):
+                self.__queue['samples'].append((mqtt_id, payload))
+                if self.__stopped:
+                        log.warning("Holding %d sample messages on queue", 
+                                    len(self._queue['samples']))
+                        return
+                while len(self.__queue['samples']):
+                        item = self.__queue['samples'].pop(0)
+                        self.dbwritter.processSamples(item[0], item[1])
+                
 
 	# --------------
 	# Server Control

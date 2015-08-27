@@ -26,6 +26,11 @@
 #========================================================================#
 [GENERIC]
 
+# If true, the EMADB server will hold incoming MQTT messages instead of 
+# writting them to the SQL database
+# Useful to perform online database maintenance
+on_hold = false
+
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
 generic_log = INFO
 
@@ -63,6 +68,9 @@ dbase_file = /var/dbase/emahistory.db
 
 # Directory where JSON data is located
 dbase_json_dir = /etc/emadb
+
+# Period for periodic task execution [minutes]
+dbase_period = 5
 
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
 dbase_log = DEBUG

@@ -128,11 +128,11 @@ class MQTTClient(Lazy):
                 msg.topic, msg.qos, msg.retain)
       id = msg.topic.split('/')[1]
       if msg.topic.endswith("history/minmax"):
-         self.ema.dbwritter.processMinMax(id, msg.payload)
+         self.ema.onMinMaxMessage(id, msg.payload)
       elif msg.topic.endswith("history/samples"):
-         self.ema.dbwritter.processSamples(id, msg.payload)
+         self.ema.onSamplesMessage(id, msg.payload)
       elif msg.topic.endswith("current/status"):
-         self.ema.dbwritter.processStatus(id, msg.payload)
+         self.ema.onStatusMessage(id, msg.payload)
       else:
          log.warn("message received on unexpected topic %s", msg.topic)
          
