@@ -1,12 +1,28 @@
 * ETL:
- - implementar el mecanismo de reload con una signal
+   - implementar el mecanismo de reload con una signal
+   - reload() method para todo el mundo
+   - modificar server para usar SIGUP y addReoad()
+   - alternativa para Windows ????
+- realtime updates, nada de acumular flushear en work()
+- borrado periodico de la tabla  RealTimeStatus
+  - ¡ solo si tinee datos ! 
+  - a las 00::00 UTC
+  - work() se ejecuta cada 5 minutos
+  - cleanup() borra filas las filas cuya date_id < current_date  
+- VACUUM
+  - ¡ solo si ha actividad de borrado !
+  - con un objeto Alarmable2, retrigereable ¿ cada cuantos segndos? 
+  - poner la bd on_hold()
 * SCHEMA:
-  - tabla de  messages cada 5 minutos
+  - tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
+   esos datos desde la EMA
 * INFORMES
+  - subdirectorio de queries en la instalacion
   - ultimos 10 maximas voltages con sus unidades
   - ultimos 10 minmas voltages con susu unidades
 * Servicio en Windows
 * Instalador en Windows
+* ¿ Que pasa con el NTP ?
 
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
