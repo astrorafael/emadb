@@ -177,10 +177,23 @@ def xtWindDirection(message):
 
 class MinMaxHistory(object):
 
-   def __init__(self, conn):
+   def __init__(self, paren, conn):
       self.__conn     = conn
       self.__cursor   = self.__conn.cursor()
       self.__rowcount = self.rowcount()
+      self.__paren = paren
+      # Build units cache
+      self.__relay = {
+         (RLY_CLOSED,RLY_CLOSED): paren.lkUnits(roof=RLY_CLOSED,aux=RLY_CLOSED),
+         (RLY_CLOSED,RLY_OPEN):   paren.lkUnits(roof=RLY_CLOSED, aux=RLY_OPEN),
+         (RLY_OPEN,RLY_CLOSED):   paren.lkUnits(roof=RLY_OPEN, aux=RLY_CLOSED),
+         (RLY_OPEN,RLY_OPEN):     paren.lkUnits(roof=RLY_OPEN, aux=RLY_OPEN),
+      }
+      # Build type cache
+      self.__type = {
+         TYP_MIN:  paren.lkType(TYP_MIN),
+         TYP_MAX:  paren.lkType(TYP_MAX),
+      }
       log.debug("MinMaxHistory object created")
 
    def rowcount(self):
@@ -206,16 +219,19 @@ class MinMaxHistory(object):
       log.info("minmax commited rows (%d/%d)", rc - self.__rowcount, len(rows))
       self.__rowcount = rc
 
-   def row(self, date_id, time_id, station_id, message, paren):
-      '''Produces one row to be inserted into the database'''
-      roof_r = xtRoofRelay(message)
-      aux_r  = xtAuxRelay(message)
+   def row(self, date_id, time_id, station_id, message):
+      '''Produces one minmax row to be inserted into the database'''
+
+      # Get values from cache
+      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)), 0)
+      type_id  = self.__type.get(xtMeasType(message), 0)
+
       return (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
-         paren.lkType(xtMeasType(message)),   # type_id
-         paren.lkUnits(roof_r, aux_r),        # units_id
+         type_id,               # type_id
+         units_id,                            # units_id
          xtVoltage(message),                  # voltage
          xtRainProbability(message),          # rain_probability
          xtCloudLevel(message),               # clouds_level
@@ -239,10 +255,19 @@ class MinMaxHistory(object):
 
 class RealTimeSamples(object):
 
-   def __init__(self, conn):
+   def __init__(self, paren, conn):
       self.__conn     = conn
       self.__cursor   = self.__conn.cursor()
       self.__rowcount = self.rowcount()
+      self.__paren    = paren
+      
+      # Build units cache
+      self.__relay = {
+         (RLY_CLOSED,RLY_CLOSED): paren.lkUnits(roof=RLY_CLOSED,aux=RLY_CLOSED),
+         (RLY_CLOSED,RLY_OPEN):   paren.lkUnits(roof=RLY_CLOSED, aux=RLY_OPEN),
+         (RLY_OPEN,RLY_CLOSED):   paren.lkUnits(roof=RLY_OPEN, aux=RLY_CLOSED),
+         (RLY_OPEN,RLY_OPEN):     paren.lkUnits(roof=RLY_OPEN, aux=RLY_OPEN),
+      }
       log.debug("RealTimeSamples object created")
 
    def rowcount(self):
@@ -268,15 +293,17 @@ class RealTimeSamples(object):
       log.debug("samples commited rows (%d/%d)", rc - self.__rowcount, len(rows))
       self.__rowcount = rc
 
-   def row(self, date_id, time_id, station_id, lag, message, paren):
-      '''Produces one row to be inserted into the database'''
-      roof_r = xtRoofRelay(message)
-      aux_r  = xtAuxRelay(message)
+   def row(self, date_id, time_id, station_id, lag, message):
+      '''Produces one real time row to be inserted into the database'''
+
+      # get units from cache
+      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)),0 )
+
       r = (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
-         paren.lkUnits(roof_r, aux_r),        # units_id
+         units_id,              # units_id
          xtVoltage(message),                  # voltage
          xtRainProbability(message),          # rain_probability
          xtCloudLevel(message),               # clouds_level
@@ -322,8 +349,8 @@ class DBWritter(Lazy):
             self.__conn.rollback()
          raise
       ema.addLazy(self)
-      self.minmax = MinMaxHistory(self.__conn)
-      self.realtime = RealTimeSamples(self.__conn)
+      self.minmax = MinMaxHistory(self, self.__conn)
+      self.realtime = RealTimeSamples(self, self.__conn)
       log.info("DBWritter object created")
 
    # -----------
@@ -341,9 +368,9 @@ class DBWritter(Lazy):
       message = payload.split('\n')
       for i in range(0 , len(message)/3):
          date_id, time_id, dummy = xtDateTime(message[3*i+2])
-         r = self.minmax.row(date_id, time_id, station_id, message[3*i], self)
+         r = self.minmax.row(date_id, time_id, station_id, message[3*i])
          rows.append(r)
-         r = self.minmax.row(date_id, time_id, station_id, message[3*i+1], self)
+         r = self.minmax.row(date_id, time_id, station_id, message[3*i+1])
          rows.append(r)
       # It seemd there is no need to sort the dates
       # non-overlapping data do get written anyway 
@@ -365,8 +392,8 @@ class DBWritter(Lazy):
       log.debug( "t1 = %s, t0 = %s", t1, t0)
       log.debug("Received status message from station %s (lag = %d)",
                 mqtt_id, lag)
-      r = self.realtime.row(date_id, time_id, station_id, lag, message[0], self)
-      self.realtime.insert(r)
+      row = self.realtime.row(date_id, time_id, station_id, lag, message[0])
+      self.realtime.insert(row)
 
 
    def processSamples(self, mqtt_id, payload):
