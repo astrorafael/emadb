@@ -39,6 +39,9 @@ generic_log = INFO
 
 # MQTT Client config
 
+# Ony the topic list and log levels are reconfigurable
+# by reload in this section
+
 # The unique id string used as the root name in topics (i.e EMA/#)
 # and also as part of the client_id when connecting to the broker.
 mqtt_id = emadb
@@ -63,6 +66,8 @@ mqtt_log = INFO
 # Database configuration section
 [DBASE]
 
+# All items in this section are reconfigurable by reload
+
 # Full Database Path File Name
 dbase_file = /var/dbase/emahistory.db
 
@@ -73,4 +78,4 @@ dbase_json_dir = /etc/emadb
 dbase_period = 5
 
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
-dbase_log = DEBUG
+dbase_log = INFO
