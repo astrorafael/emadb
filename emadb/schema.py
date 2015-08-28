@@ -364,7 +364,7 @@ class MeasurementType(object):
         if replace:
             log.info("Replacing Type Table data")
             self.__cursor.executemany(
-                "INSERT OR REPLACE INTO Type VALUES(?,?)", 
+                "INSERT OR REPLACE INTO Type VALUES(?,?)",
                 meas_types)
         else:
             log.info("Populating Type Table if empty")
@@ -414,8 +414,24 @@ class Units(object):
             """
             CREATE TABLE IF NOT EXISTS Units
             (
-            units_id       INTEGER PRIMARY KEY, 
-            units          TEXT
+            units_id                INTEGER PRIMARY KEY, 
+            roof_relay              TEXT,
+            aux_relay               TEXT,
+            voltage                 TEXT,
+            rain_probability        TEXT,
+            clouds_level            TEXT,
+            cal_pressure            TEXT,
+            abs_pressure            TEXT,
+            rain_level              TEXT,
+            irradiantion            TEXT,
+            visual_magnitude        TEXT,
+            instrumental_magnitude  TEXT,
+            temperature             TEXT,
+            relative_humidity       TEXT,
+            dew_point               TEXT,
+            wind_speed              TEXT,
+            wind_direction          TEXT,
+            lag                     TEXT
             );
             """
         )
@@ -427,12 +443,12 @@ class Units(object):
         if replace:
             log.info("Replacing Units Table data")
             self.__cursor.executemany(
-                "INSERT OR REPLACE INTO Units VALUES(?,?)", 
+                "INSERT OR REPLACE INTO Units VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
                 units)
         else:
             log.info("Populating Units Table if empty")
             self.__cursor.executemany(
-                "INSERT OR IGNORE INTO Units VALUES(?,?)", 
+                "INSERT OR IGNORE INTO Units VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
                 units)
 
     # --------------
@@ -471,34 +487,23 @@ class MinMaxHistory(object):
             time_id                 INTEGER NOT NULL REFERENCES Time(time_id), 
             station_id          INTEGER NOT NULL REFERENCES Station(station_id),
             type_id                 INTEGER NOT NULL REFERENCES Type(type_id),
-            roof_relay_id           INTEGER NOT NULL REFERENCES Units(units_id),
-            aux_relay_id            INTEGER NOT NULL REFERENCES Units(units_id),
-            voltage                 REAL    NOT NULL,
-            voltage_units_id        INTEGER NOT NULL REFERENCES Units(units_id),
-            rain_probability        REAL    NOT NULL,
-            rain_prob_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            clouds_level            REAL    NOT NULL,
-            clouds_level_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            cal_pressure            REAL    NOT NULL,
-            cal_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            abs_pressure            REAL    NOT NULL,
-            abs_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            rain_level              REAL    NOT NULL,
-            rain_level_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
-            irradiantion            REAL    NOT NULL,
-            irradiantion_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            magnitude               REAL    NOT NULL,
-            magnitude_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            temperature             REAL    NOT NULL,
-            temperature_units_id    INTEGER NOT NULL REFERENCES Units(units_id),
-            humidity                REAL    NOT NULL,
-            humidity_units_id       INTEGER NOT NULL REFERENCES Units(units_id),
-            dew_point               REAL    NOT NULL,
-            dew_point_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            wind_speed              REAL    NOT NULL,
-            wind_speed_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
-            wind_direction          INTEGER NOT NULL,
-            wind_direction_units_id INTEGER NOT NULL REFERENCES Units(units_id),
+            units_id                INTEGER NOT NULL REFERENCES Units(units_id),
+            roof_relay              INTEGER NOT_NULL REFERENCES Units(units_id),
+            aux_relay               INTEGER NOT_NULL REFERENCES Units(units_id),
+            voltage                 REAL,
+            rain_probability        REAL,
+            clouds_level            REAL,
+            cal_pressure            REAL,
+            abs_pressure            REAL,
+            rain_level              REAL,
+            irradiantion            REAL,
+            visual_magnitude        REAL,
+            instrumental_magnitude  REAL,
+            temperature             REAL,
+            relative_humidity       REAL,
+            dew_point               REAL,
+            wind_speed              REAL,
+            wind_direction          INTEGER,
             PRIMARY KEY (date_id, time_id, station_id, type_id)
             );
             """
@@ -534,34 +539,21 @@ class RealTimeSamples(object):
             station_id          INTEGER NOT NULL REFERENCES Station(station_id),
             roof_relay_id           INTEGER NOT NULL REFERENCES Units(units_id),
             aux_relay_id            INTEGER NOT NULL REFERENCES Units(units_id),
-            voltage                 REAL    NOT NULL,
-            voltage_units_id        INTEGER NOT NULL REFERENCES Units(units_id),
-            rain_probability        REAL    NOT NULL,
-            rain_prob_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            clouds_level            REAL    NOT NULL,
-            clouds_level_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            cal_pressure            REAL    NOT NULL,
-            cal_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            abs_pressure            REAL    NOT NULL,
-            abs_pressure_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            rain_level              REAL    NOT NULL,
-            rain_level_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
-            irradiantion            REAL    NOT NULL,
-            irradiantion_units_id   INTEGER NOT NULL REFERENCES Units(units_id),
-            magnitude               REAL    NOT NULL,
-            magnitude_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            temperature             REAL    NOT NULL,
-            temperature_units_id    INTEGER NOT NULL REFERENCES Units(units_id),
-            humidity                REAL    NOT NULL,
-            humidity_units_id       INTEGER NOT NULL REFERENCES Units(units_id),
-            dew_point               REAL    NOT NULL,
-            dew_point_units_id      INTEGER NOT NULL REFERENCES Units(units_id),
-            wind_speed              REAL    NOT NULL,
-            wind_speed_units_id     INTEGER NOT NULL REFERENCES Units(units_id),
-            wind_direction          INTEGER NOT NULL,
-            wind_direction_units_id INTEGER NOT NULL REFERENCES Units(units_id),
-            lag                     INTEGER NOT NULL,
-            lag_units_id            INTEGER NOT NULL REFERENCES Units(units_id),
+            voltage                 REAL,
+            rain_probability        REAL,
+            clouds_level            REAL,
+            cal_pressure            REAL,
+            abs_pressure            REAL,
+            rain_level              REAL,
+            irradiantion            REAL,
+            visual_magnitude        REAL,
+            instrumental_magnitude  REAL,
+            temperature             REAL,
+            relative_humidity       REAL,
+            dew_point               REAL,
+            wind_speed              REAL,
+            wind_direction          INTEGER,
+            lag                     INTEGER,
             PRIMARY KEY (date_id, time_id, station_id)
             );
             """

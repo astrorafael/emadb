@@ -1,28 +1,97 @@
 # UNITS FILE FORMAT
 #
-# A list of units entries. 
-# Each unit is a list with the following fields:
-# ----------------------------
-#    [
-#        units_id (integer),
-#        units     (string),
-#    ], 
-# ----------------------------
+# ---------------------------------------------------------------------------
+# A list of units entries.
+# This is a "Junk dimension" in the Kimball methodology 
+# with all the possible unit combinaations
+# The four rows correspond to the only "moving parts": Roof & Auxiliar relays
+# ---------------------------------------------------------------------------
 
-# units_id = 0 is reserved for the 'Unknown' unit
+# units_id = 0 is reserved
 
 [
-    [  0, "Unknown"     ],
-    [  1, "%"           ],            
-    [  2, "Open"        ],
-    [  3, "Closed"      ],
-    [  4, "Km/h"        ],
-    [  5, "degrees"     ],
-    [  6, "HPa"         ],
-    [  7, "Mv/arcsec^2" ],
-    [  8, "mm"          ],
-    [  9, "deg C"       ],
-    [ 10, "V"           ],
-    [ 11, "Hz"          ],
-    [ 12, "sec"         ]
+
+    [  
+	1, 
+	"Closed",
+	"Closed",
+	"V",
+	"%",
+	"%",
+	"HPa",
+	"HPa",
+	"mm",
+	"%",
+	"Mv/arcsec^2",
+	"Hz",
+	"deg C",
+	"%",
+	"deg C",
+	"Km/h",
+	"degrees",
+	"sec"
+    ],
+
+    [  
+	2, 
+	"Closed",
+	"Open",
+	"V",
+	"%",
+	"%",
+	"HPa",
+	"HPa",
+	"mm",
+	"%",
+	"Mv/arcsec^2",
+	"Hz",
+	"deg C",
+	"%",
+	"deg C",
+	"Km/h",
+	"degrees",
+	"sec"
+    ],
+
+    [  
+	3, 
+	"Open",
+	"Closed",
+	"V",
+	"%",
+	"%",
+	"HPa",
+	"HPa",
+	"mm",
+	"%",
+	"Mv/arcsec^2",
+	"Hz",
+	"deg C",
+	"%",
+	"deg C",
+	"Km/h",
+	"degrees",
+	"sec"
+    ],
+
+    [  
+	4, 
+	"Open",
+	"Open",
+	"V",
+	"%",
+	"%",
+	"HPa",
+	"HPa",
+	"mm",
+	"%",
+	"Mv/arcsec^2",
+	"Hz",
+	"deg C",
+	"%",
+	"deg C",
+	"Km/h",
+	"degrees",
+	"sec"
+    ]
 ]
