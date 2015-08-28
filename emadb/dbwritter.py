@@ -177,11 +177,16 @@ def xtWindDirection(message):
 
 class MinMaxHistory(object):
 
-   def __init__(self, paren, conn):
+   def __init__(self, paren):
+      self.__paren = paren
+
+
+   def reload(self, conn):            
+      '''Reconfigures itself after a reload'''
       self.__conn     = conn
       self.__cursor   = self.__conn.cursor()
       self.__rowcount = self.rowcount()
-      self.__paren = paren
+      paren = self.__paren      # shortcut
       # Build units cache
       self.__relay = {
          (RLY_CLOSED,RLY_CLOSED): paren.lkUnits(roof=RLY_CLOSED,aux=RLY_CLOSED),
@@ -193,8 +198,7 @@ class MinMaxHistory(object):
       self.__type = {
          TYP_MIN:  paren.lkType(TYP_MIN),
          TYP_MAX:  paren.lkType(TYP_MAX),
-      }
-      log.debug("MinMaxHistory object created")
+      }      
 
    def rowcount(self):
       '''Find out the current row count'''
@@ -255,12 +259,16 @@ class MinMaxHistory(object):
 
 class RealTimeSamples(object):
 
-   def __init__(self, paren, conn):
+   def __init__(self, paren):
+      self.__paren    = paren
+
+
+   def reload(self, conn):            
+      '''Reconfigures itself after a reload'''
       self.__conn     = conn
       self.__cursor   = self.__conn.cursor()
       self.__rowcount = self.rowcount()
-      self.__paren    = paren
-      
+      paren = self.__paren      # shortcut
       # Build units cache
       self.__relay = {
          (RLY_CLOSED,RLY_CLOSED): paren.lkUnits(roof=RLY_CLOSED,aux=RLY_CLOSED),
@@ -268,7 +276,7 @@ class RealTimeSamples(object):
          (RLY_OPEN,RLY_CLOSED):   paren.lkUnits(roof=RLY_OPEN, aux=RLY_CLOSED),
          (RLY_OPEN,RLY_OPEN):     paren.lkUnits(roof=RLY_OPEN, aux=RLY_OPEN),
       }
-      log.debug("RealTimeSamples object created")
+
 
    def rowcount(self):
       '''Find out the current row count'''
@@ -299,7 +307,7 @@ class RealTimeSamples(object):
       # get units from cache
       units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)),0 )
 
-      r = (
+      return (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
@@ -319,9 +327,8 @@ class RealTimeSamples(object):
          xtWindSpeed(message),                # wind_speed
          xtWindDirection(message),            # wind_direction
          lag,                                 # lag
-         )
-      log.debug(r)
-      return r
+      )
+
 
 
 # ==========
@@ -331,15 +338,28 @@ class RealTimeSamples(object):
 class DBWritter(Lazy):
 
    def __init__(self, ema, parser):
+      Lazy.__init__(self, 60)
+      self.ema        = ema
+      self.__parser   = parser
+      self.__conn     = None
+      self.minmax     = MinMaxHistory(self)
+      self.realtime   = RealTimeSamples(self)
+      ema.addLazy(self)
+      self.reload()
+      log.info("DBWritter object created")
+
+   def reload(self):
+      '''Reload config data and reconfigure itself'''
+      parser = self.__parser
       lvl      = parser.get("DBASE", "dbase_log")
       log.setLevel(lvl)
       dbfile    = parser.get("DBASE", "dbase_file")
       json_dir  = parser.get("DBASE", "dbase_json_dir")
       period    = parser.getint("DBASE", "dbase_period")
-      Lazy.__init__(self, period*60)
-      self.ema        = ema
-      self.__conn     = None
+      self.setPeriod(60*period)
       try:
+         if self.__conn is not None:
+            self.__conn.close()
          self.__conn    = sqlite3.connect(dbfile)
          self.__cursor  = self.__conn.cursor()
          schema.generate(self.__conn, json_dir, replace=False)
@@ -348,10 +368,10 @@ class DBWritter(Lazy):
          if self.__conn:
             self.__conn.rollback()
          raise
-      ema.addLazy(self)
-      self.minmax = MinMaxHistory(self, self.__conn)
-      self.realtime = RealTimeSamples(self, self.__conn)
-      log.info("DBWritter object created")
+      self.minmax.reload(self.__conn)
+      self.realtime.reload(self.__conn)
+      log.info("Reload complete")
+      
 
    # -----------
    # ETL API
@@ -393,7 +413,7 @@ class DBWritter(Lazy):
       log.debug("Received status message from station %s (lag = %d)",
                 mqtt_id, lag)
       row = self.realtime.row(date_id, time_id, station_id, lag, message[0])
-      self.realtime.insert(row)
+      self.realtime.insert((row,))
 
 
    def processSamples(self, mqtt_id, payload):
