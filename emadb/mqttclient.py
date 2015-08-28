@@ -77,25 +77,38 @@ class MQTTClient(Lazy):
    QoS = 1                      # Accept duplicate messages
 
    def __init__(self, ema, parser):
-      lvl      = parser.get("MQTT", "mqtt_log")
-      log.setLevel(lvl)
+      Lazy.__init__(self, 60)
+      self.__parser   = parser
+      self.ema        = ema
+      self.__state    = NOT_CONNECTED
+      ema.addLazy(self)
+      # We do not allow to reconfigure an existing connection
+      # to a broker as we would loose incoming data
       self.__id       = parser.get("MQTT", "mqtt_id")
       self.__host     = parser.get("MQTT", "mqtt_host")
       self.__port     = parser.getint("MQTT", "mqtt_port")
-      self.__period   = parser.getint("MQTT", "mqtt_period")
-      topics          = utils.chop(parser.get("MQTT", "mqtt_topics"),',')
-      self.__topics   = [ (topic, MQTTClient.QoS) for topic in topics ] 
-      Lazy.__init__(self, self.__period /  2 )
-      self.ema        = ema
-      self.__state    = NOT_CONNECTED
-      self.__mqtt     =  mqtt.Client(client_id=self.__id+'@'+socket.gethostname(), userdata=self)
+      self.__mqtt     =  mqtt.Client(client_id=self.__id+'@'+ socket.gethostname(), userdata=self)
       self.__mqtt.on_connect     = on_connect
       self.__mqtt.on_disconnect  = on_disconnect
       self.__mqtt.on_message     = on_message
       self.__mqtt.on_subscribe   = on_subscribe
       self.__mqtt.on_unsubscribe = on_unsubscribe
-      ema.addLazy(self)
+      self.reload()
       log.info("MQTT client created")
+
+      # we only allow to reconfigure the topic list and keepalive period
+   def reload(self):
+      '''Reloads and reconfigures itself'''
+      parser = self.__parser    # shortcut
+      lvl             = parser.get("MQTT", "mqtt_log")
+      log.setLevel(lvl)
+      self.__period   = parser.getint("MQTT", "mqtt_period")
+      topics          = utils.chop(parser.get("MQTT", "mqtt_topics"),',')
+      self.__topics   = [ (topic, MQTTClient.QoS) for topic in topics ] 
+      self.setPeriod(self.__period /  2 )
+      if self.__state == CONNECTED:
+         self.subscribe()
+      log.info("Reload complete")
 
    # ----------------------------------------
    # Implement MQTT Callbacks
@@ -106,8 +119,7 @@ class MQTTClient(Lazy):
      if rc == 0:
        self.__state = CONNECTED
        log.info("Connected successfully") 
-       log.info("Subscribing to topics %s", self.__topics) 
-       self.__mqtt.subscribe(self.__topics)
+       self.subscribe()
      else:
        self.__state = FAILED
        log.error("Connection failed, rc =%d", rc)
@@ -183,6 +195,10 @@ class MQTTClient(Lazy):
    # Helper methods
    # --------------
 
+   def subscribe(self):
+      '''Subscribe to a list of topics'''
+      log.info("Subscribing to topics %s", self.__topics) 
+      self.__mqtt.subscribe(self.__topics)
 
    def connect(self):
       '''

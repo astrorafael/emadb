@@ -341,6 +341,7 @@ class DBWritter(Lazy):
       Lazy.__init__(self, 60)
       self.ema        = ema
       self.__parser   = parser
+      self.__file     = None
       self.__conn     = None
       self.minmax     = MinMaxHistory(self)
       self.realtime   = RealTimeSamples(self)
@@ -358,10 +359,12 @@ class DBWritter(Lazy):
       period    = parser.getint("DBASE", "dbase_period")
       self.setPeriod(60*period)
       try:
-         if self.__conn is not None:
+         if self.__file != dbfile and self.__conn is not None:
+            log.debug("opening a new database")
             self.__conn.close()
          self.__conn    = sqlite3.connect(dbfile)
          self.__cursor  = self.__conn.cursor()
+         self.__file    = dbfile
          schema.generate(self.__conn, json_dir, replace=False)
       except sqlite3.Error as e:
          log.error("Error %s:", e.args[0])
