@@ -129,6 +129,7 @@ class MQTTClient(Lazy):
    def on_disconnect(self, rc):
      log.warning("Unexpected disconnection, rc =%d", rc)
      self.__state  = NOT_CONNECTED
+     self.__topics = []
      try:
        self.ema.delReadable(self)
      except ValueError as e:
