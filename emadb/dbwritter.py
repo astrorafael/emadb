@@ -74,28 +74,36 @@ def xtDateTime(tstamp):
    date_id = ts.year*10000 + ts.month*100 + ts.day
    return date_id, time_id, ts
 
+TYP_SAMPLES = 'Samples'
+TYP_MIN     = 'Minima'
+TYP_MAX     = 'Maxima'
+TYP_UNK     = 'Unknown'
+
 def xtMeasType(message):
    '''Extract and transform Measurement Type'''
    t =  message[SMTB:SMTE]
    if t == MTCUR:
-      msgtype = 'Samples'
+      msgtype = TYP_SAMPLE
    elif t == MTMIN:
-      msgtype = 'Minima'
+      msgtype = TYP_MIN
    elif t == MTMAX:
-      msgtype = 'Maxima'
+      msgtype = TYP_MAX
    else:
-      msgtype = 'Unknown'
+      msgtype = TYP_UNK
    return msgtype
+
+RLY_OPEN   = 'Open'
+RLY_CLOSED = 'Closed'
 
 def xtRoofRelay(message):
    '''Extract and transform Roof Relay Status'''
    c = message[SRRB]
-   return 'Closed' if c == 'C' else 'Open'
+   return RLY_CLOSED if c == 'C' else RLY_OPEN
 
 def xtAuxRelay(message):
    '''Extract and transform Aux Relay Status'''
    c = message[SARB]
-   return 'Open' if c == 'E' or c == 'e' else 'Closed'
+   return RLY_OPEN if c == 'E' or c == 'e' else RLY_CLOSED
 
 def xtVoltage(message):
    '''Extract and transform Voltage'''
@@ -125,14 +133,19 @@ def xtIrradiation(message):
    '''Extract and transform Solar Irradiantion Level'''
    return float(message[SPYB:SPYE]) / 10
 
-def xtMagnitude(message):
-   '''Extract and Transform into Visual maginitued per arcsec 2'''
+def xtMagInstrument(message):
+   '''Extract and Transform into Instrumental Magnitude in Hz'''
    exp  = int(message[SPHB]) - 3      
    mant = int(message[SPHB+1:SPHE])
-   # We need the formulae to compute visual magnitude from Hz
-   # For the time being, we return Hz.
    return mant*pow(10, exp)
 
+def xtMagVisual(message):
+   '''Extract and Transform into Visual maginitued per arcsec 2'''
+   instrmag = xtMagInstrument(message)
+   # We need the formulae to compute visual magnitude from Hz
+   # For the time being, we return Hz.
+   return 0.0
+   
 def xtTemperature(message):
    '''Extract and transform Temperature'''
    return  float(message[SATB:SATE]) / 10
@@ -180,53 +193,43 @@ class MinMaxHistory(object):
       log.info("Update MinMaxHistory Table data")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.warn("Overlapping rows")  
       except sqlite3.Error, e:
          log.error(e)
+         self.__conn.rollback()
          raise
       self.__conn.commit()   # commit anyway what was really updated
       rc = self.rowcount()
-      log.info("commited Rows (%d/%d)", rc - self.__rowcount, len(rows))
+      log.info("minmax commited rows (%d/%d)", rc - self.__rowcount, len(rows))
       self.__rowcount = rc
 
    def row(self, date_id, time_id, station_id, message, paren):
       '''Produces one row to be inserted into the database'''
+      roof_r = xtRoofRelay(message)
+      aux_r  = xtAuxRelay(message)
       return (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
          paren.lkType(xtMeasType(message)),   # type_id
-         paren.lkUnits(xtRoofRelay(message)), # roof_relay_id
-         paren.lkUnits(xtAuxRelay(message)),  # aux_relay_id
+         paren.lkUnits(roof_r, aux_r),        # units_id
          xtVoltage(message),                  # voltage
-         paren.lkUnits('V'),                  # voltage_units_id
          xtRainProbability(message),          # rain_probability
-         paren.lkUnits('%'),                  # rain_proability_units_id
          xtCloudLevel(message),               # clouds_level
-         paren.lkUnits('%'),                  # clouds_level_units_id
          xtCalPressure(message),              # cal_pressure
-         paren.lkUnits('HPa'),                # call_pressure_units_id
          xtAbsPressure(message),              # abs_pressure
-         paren.lkUnits('HPa'),                # abs_pressure_units_id
          xtRainLevel(message),                # rain_level
-         paren.lkUnits('mm'),                 # rain_level_units_id
          xtIrradiation(message),              # irradiation
-         paren.lkUnits('%'),                  # irradiation_units_id
-         xtMagnitude(message),                # magnitude
-         paren.lkUnits('Hz'),                 # magnitude_units_id
+         xtMagVisual(message),                # visual_magnitude
+         xtMagInstrument(message),            # instrumental_magnitude
          xtTemperature(message),              # temperature
-         paren.lkUnits('deg C'),              # temperature_units_id
          xtHumidity(message),                 # humidity
-         paren.lkUnits('%'),                  # humidity_units_id
          xtDewPoint(message),                 # dew_point
-         paren.lkUnits('deg C'),              # dew_point_units_id
          xtWindSpeed(message),                # wind_speed
-         paren.lkUnits('Km/h'),               # wind_speed_units_id
          xtWindDirection(message),            # wind_direction
-         paren.lkUnits('degrees'),            # wind_direction_units_id
          )
 
 
@@ -252,55 +255,46 @@ class RealTimeSamples(object):
       log.info("Update RealTimeSamples Table data")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.warn("Overlapping rows")  
       except sqlite3.Error, e:
          log.error(e)
+         self.__conn.rollback()
          raise
       self.__conn.commit()   # commit anyway what was really updated
       rc = self.rowcount()
-      log.info("commited Rows (%d/%d)", rc - self.__rowcount, len(rows))
+      log.debug("samples commited rows (%d/%d)", rc - self.__rowcount, len(rows))
       self.__rowcount = rc
 
    def row(self, date_id, time_id, station_id, lag, message, paren):
       '''Produces one row to be inserted into the database'''
-      return (
+      roof_r = xtRoofRelay(message)
+      aux_r  = xtAuxRelay(message)
+      r = (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
-         paren.lkUnits(xtRoofRelay(message)), # roof_relay_id
-         paren.lkUnits(xtAuxRelay(message)),  # aux_relay_id
+         paren.lkUnits(roof_r, aux_r),        # units_id
          xtVoltage(message),                  # voltage
-         paren.lkUnits('V'),                  # voltage_units_id
          xtRainProbability(message),          # rain_probability
-         paren.lkUnits('%'),                  # rain_proability_units_id
          xtCloudLevel(message),               # clouds_level
-         paren.lkUnits('%'),                  # clouds_level_units_id
          xtCalPressure(message),              # cal_pressure
-         paren.lkUnits('HPa'),                # call_pressure_units_id
          xtAbsPressure(message),              # abs_pressure
-         paren.lkUnits('HPa'),                # abs_pressure_units_id
          xtRainLevel(message),                # rain_level
-         paren.lkUnits('mm'),                 # rain_level_units_id
          xtIrradiation(message),              # irradiation
-         paren.lkUnits('%'),                  # irradiation_units_id
-         xtMagnitude(message),                # magnitude
-         paren.lkUnits('Hz'),                 # magnitude_units_id
+         xtMagVisual(message),                # visual_magnitude
+         xtMagInstrument(message),            # instrumental_magnitude
          xtTemperature(message),              # temperature
-         paren.lkUnits('deg C'),              # temperature_units_id
          xtHumidity(message),                 # humidity
-         paren.lkUnits('%'),                  # humidity_units_id
          xtDewPoint(message),                 # dew_point
-         paren.lkUnits('deg C'),              # dew_point_units_id
          xtWindSpeed(message),                # wind_speed
-         paren.lkUnits('Km/h'),               # wind_speed_units_id
          xtWindDirection(message),            # wind_direction
-         paren.lkUnits('degrees'),            # wind_direction_units_id
          lag,                                 # lag
-         paren.lkUnits('sec'),                # lag_units_id
          )
+      log.debug(r)
+      return r
 
 
 # ==========
@@ -318,7 +312,6 @@ class DBWritter(Lazy):
       Lazy.__init__(self, period*60)
       self.ema        = ema
       self.__conn     = None
-      self.__rows     = []      # acumulating status msg rows
       try:
          self.__conn    = sqlite3.connect(dbfile)
          self.__cursor  = self.__conn.cursor()
@@ -368,12 +361,12 @@ class DBWritter(Lazy):
          return
       message = payload.split('\n')
       date_id, time_id, t0 = xtDateTime(message[1])
-      lag = (t1 - t0).total_seconds()
+      lag = int(round((t1 - t0).total_seconds()))
       log.debug( "t1 = %s, t0 = %s", t1, t0)
       log.debug("Received status message from station %s (lag = %d)",
                 mqtt_id, lag)
       r = self.realtime.row(date_id, time_id, station_id, lag, message[0], self)
-      self.__rows.insert(0,r)   # more recent at the beginning
+      self.realtime.insert(r)
 
 
    def processSamples(self, mqtt_id, payload):
@@ -390,8 +383,7 @@ class DBWritter(Lazy):
       Write blocking behaviour.
       '''
       log.debug("work()")
-      self.realtime.insert(self.__rows)
-      self.__rows = []
+
 
    # ------------------------------------
    # Dimensions SQL Lookup helper methods
@@ -415,12 +407,12 @@ class DBWritter(Lazy):
       return station_id[0]
 
 
-   def lkUnits(self, units):
+   def lkUnits(self, roof, aux):
       '''return units_id key from units'''
-      self.__cursor.execute("SELECT units_id FROM Units WHERE units=?",
-                            (units,))
+      self.__cursor.execute("SELECT units_id FROM Units WHERE roof_relay=? AND aux_relay=?",
+                            (roof, aux))
       units_id = self.__cursor.fetchone() or (0,)
-      log.verbose("lkUnits(%s) => %s", units, units_id)
+      log.verbose("lkUnits(roof=%s,aux=%s) => %s", roof, aux, units_id)
       return units_id[0]
 
    # -------------------------------
