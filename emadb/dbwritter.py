@@ -360,8 +360,8 @@ class DBWritter(Lazy):
       self.setPeriod(60*period)
       try:
          if self.__file != dbfile and self.__conn is not None:
-            log.debug("opening a new database")
             self.__conn.close()
+         log.debug("opening database %s", dbfile)
          self.__conn    = sqlite3.connect(dbfile)
          self.__cursor  = self.__conn.cursor()
          self.__file    = dbfile

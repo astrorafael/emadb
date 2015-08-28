@@ -81,6 +81,7 @@ class MQTTClient(Lazy):
       self.__parser   = parser
       self.ema        = ema
       self.__state    = NOT_CONNECTED
+      self.__topics   = []
       ema.addLazy(self)
       # We do not allow to reconfigure an existing connection
       # to a broker as we would loose incoming data
@@ -103,9 +104,9 @@ class MQTTClient(Lazy):
       lvl             = parser.get("MQTT", "mqtt_log")
       log.setLevel(lvl)
       self.__period   = parser.getint("MQTT", "mqtt_period")
-      topics          = utils.chop(parser.get("MQTT", "mqtt_topics"),',')
-      self.__topics   = [ (topic, MQTTClient.QoS) for topic in topics ] 
       self.setPeriod(self.__period /  2 )
+      topics          = utils.chop(parser.get("MQTT", "mqtt_topics"),',')
+      self.__newtopics = [ (topic, MQTTClient.QoS) for topic in topics ] 
       if self.__state == CONNECTED:
          self.subscribe()
       log.info("Reload complete")
@@ -196,9 +197,24 @@ class MQTTClient(Lazy):
    # --------------
 
    def subscribe(self):
-      '''Subscribe to a list of topics'''
-      log.info("Subscribing to topics %s", self.__topics) 
-      self.__mqtt.subscribe(self.__topics)
+      '''Subscribe smartly to a list of topics'''
+
+      # Unsubscribe first if necessary
+      topics = [ t[0] for t in (set(self.__topics) - set(self.__newtopics)) ]
+      if len(topics):
+         self.__mqtt.unsubscribe(topics)
+         log.info("Unsubscribing from topics %s", topics)
+      else:
+         log.info("no need to unsubscribe")
+
+      # Now subscribe
+      topics = [ t for t in (set(self.__newtopics) - set(self.__topics)) ]
+      if len(topics):
+         log.info("Subscribing to topics %s", topics) 
+         self.__mqtt.subscribe(topics)
+      else:
+         log.info("no need to subscribe")
+      self.__topics = self.__newtopics
 
    def connect(self):
       '''
