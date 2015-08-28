@@ -1,7 +1,5 @@
 * ETL:
-   - implementar el mecanismo de reload con una signal
-   - modificar server para usar SIGUP y addReoad()
-   - alternativa para Windows ????
+   - reload: alternativa para Windows ????
 * SCHEMA:
 - borrado periodico de la tabla  RealTimeStatus
   - ¡ solo si tinee datos ! 

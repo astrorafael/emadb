@@ -337,9 +337,12 @@ class RealTimeSamples(object):
 
 class DBWritter(Lazy):
 
+   N_RT_WRITES = 60
+
    def __init__(self, ema, parser):
       Lazy.__init__(self, 60)
       self.ema        = ema
+      self.__rtwrites = 0
       self.__parser   = parser
       self.__file     = None
       self.__conn     = None
@@ -417,7 +420,9 @@ class DBWritter(Lazy):
                 mqtt_id, lag)
       row = self.realtime.row(date_id, time_id, station_id, lag, message[0])
       self.realtime.insert((row,))
-
+      self.__rtwrites += 1
+      if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
+         log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)
 
    def processSamples(self, mqtt_id, payload):
       log.debug("Received samples message from station %s", mqtt_id)
@@ -433,7 +438,6 @@ class DBWritter(Lazy):
       Write blocking behaviour.
       '''
       log.debug("work()")
-
 
    # ------------------------------------
    # Dimensions SQL Lookup helper methods
