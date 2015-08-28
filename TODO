@@ -3,6 +3,9 @@
    - reload() method para todo el mundo
    - modificar server para usar SIGUP y addReoad()
    - alternativa para Windows ????
+* SCHEMA:
+  - quitar las tablas ciempies. Mejor una Junk dimenison con UNits
+    solo cuatro filas (Open, Close, Hz, mag/arcsec^2)
 - realtime updates, nada de acumular flushear en work()
 - borrado periodico de la tabla  RealTimeStatus
   - ¡ solo si tinee datos ! 
