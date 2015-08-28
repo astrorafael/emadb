@@ -1,6 +1,5 @@
 * ETL:
    - implementar el mecanismo de reload con una signal
-   - reload() method para todo el mundo
    - modificar server para usar SIGUP y addReoad()
    - alternativa para Windows ????
 * SCHEMA:

@@ -42,6 +42,12 @@ log = logging.getLogger('emadb')
 class EMADBServer(server.Server):
         
     def __init__(self, configfile=None):
+
+        if not (configfile != None and os.path.exists(configfile)):
+            log.error("No configuration is given. Exiting ...")
+            return
+        log.info("Loading configuration from %s" % configfile)
+
         server.Server.__init__(self)
         self.__queue = {
             'minmax':  [] ,
@@ -49,29 +55,26 @@ class EMADBServer(server.Server):
             'samples': [] ,
         }
         self.__stopped = False
-        self.buildFrom(configfile)
-      
-    def buildFrom(self, configfile):
-        '''Buld children objects from configuration file'''
-        
-        if not (configfile != None and os.path.exists(configfile)):
-            log.error("No configuration is given. Exiting ...")
-            return
-            
-        log.info("Loading configuration from %s" % configfile)
-        config = parser.ConfigParser()
-        config.optionxform = str
-        config.read(configfile)
-
-        # Set own config options
-        log.setLevel(config.get("GENERIC", "generic_log"))
-        self.hold(config.getboolean("GENERIC", "on_hold"))
+        self.__parser = parser.ConfigParser()
+        self.__parser.optionxform = str
+        self.__parser.read(configfile)
+        log.setLevel(self.__parser.get("GENERIC", "generic_log"))
+        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
 
         # DBWritter object 
-        self.dbwritter = dbwritter.DBWritter(self, config)
+        self.dbwritter = dbwritter.DBWritter(self, self.__parser)
 				
         # MQTT Driver object 
-        self.mqttclient = mqttclient.MQTTClient(self, config)
+        self.mqttclient = mqttclient.MQTTClient(self, self.__parser)
+
+    def reload(self):
+        '''To be called *only* on SIGHUP or similar reload method'''
+        log.setLevel(self.__parser.get("GENERIC", "generic_log"))
+        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
+        self.mqttclient.reload()
+        self.dbwritter.reload()
+        log.info("Reload complete")
+
 
     # --------------
     # Queue Handing
