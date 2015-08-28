@@ -42,7 +42,6 @@ log = logging.getLogger('emadb')
 class EMADBServer(server.Server):
         
     def __init__(self, configfile=None):
-
         if not (configfile != None and os.path.exists(configfile)):
             log.error("No configuration is given. Exiting ...")
             return
@@ -55,25 +54,30 @@ class EMADBServer(server.Server):
             'samples': [] ,
         }
         self.__stopped = False
+        self.__configfile = configfile
         self.__parser = parser.ConfigParser()
         self.__parser.optionxform = str
         self.__parser.read(configfile)
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
         self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
-
         # DBWritter object 
         self.dbwritter = dbwritter.DBWritter(self, self.__parser)
-				
         # MQTT Driver object 
         self.mqttclient = mqttclient.MQTTClient(self, self.__parser)
 
     def reload(self):
         '''To be called *only* on SIGHUP or similar reload method'''
+        log.info("=======================")
+        log.info("RELOADING CONFIGURATION")
+        log.info("=======================")
+        self.__parser.read(self.__configfile)
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
         self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
         self.mqttclient.reload()
         self.dbwritter.reload()
-        log.info("Reload complete")
+        log.info("===============")
+        log.info("RELOAD COMPLETE")
+        log.info("===============")
 
 
     # --------------

@@ -285,7 +285,7 @@ class RealTimeSamples(object):
 
    def insert(self, rows):
       '''Update the RealTimeSamples Fact Table'''
-      log.info("Update RealTimeSamples Table data")
+      log.debug("Update RealTimeSamples Table data")
       try:
          self.__cursor.executemany(
             "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
