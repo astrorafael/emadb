@@ -21,37 +21,13 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
+import os
 import sys
-import logging
-import argparse
 
-from logger      import logToConsole, logToFile
-from default     import VERSION, VERSION_STRING, CONFIGFILE
-from emadbserver import EMADBServer
-
-def parser():
-    '''Create the command line interface options'''
-    _parser = argparse.ArgumentParser(prog='emadb')
-    _parser.add_argument('--version', action='version', version='%s' % VERSION_STRING)
-    _parser.add_argument('-l' , '--log-file', type=str, action='store', metavar='<log file>', help='log to file')
-    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-s' , '--by-size', action='store_true', help='rotate log by size. If no set, rotate every midnight')
-
-    _parser.add_argument('-m' , '--max-size', type=int , default=1000000, help='logfile max size when rotating by size')
-
-    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
-    return _parser
-
-
-opts = parser().parse_args()
-if opts.console:
-    logToConsole()
-    
-if opts.log_file:
-    logToFile(opts.log_file, opts.by_size, opts.max_size)
-
-
-logging.getLogger().info("Starting %s" % VERSION_STRING)
-server = EMADBServer(opts.config or CONFIGFILE)
-server.run()    # Looping  until exception is caught
-server.stop()
+if os.name == "nt":
+   import winservice
+ellsif os.name == "posix:
+   import linservice
+else
+   print("ERROR: unsupported OS")
+   sys.exit(1)
