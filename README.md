@@ -18,6 +18,8 @@ Three data sources are available:
 + 5 min. individual samples (historic data) (NOT YET IMPLEMENTED)
 + individual samples (real time, 1 min. aprox)
 
+**Warning**: Time handled by EMA is UTC, not local time.
+
 ## Installation & Configuration
 
 ### Linux installation (Debian)
