@@ -33,12 +33,12 @@ All executables are copied to /usr/local/bin
 Type `sudo emadb` to start the service in foreground with console output
 
 An available startup service script for debian-based systems is provided. 
-Type `sudo service emad start` to start it
-Type `sudo update-rc.d emad defaults` to install it at boot time
+Type `sudo service emad start` to start it.
+Type `sudo update-rc.d emad defaults` to install it at boot time.
 
 ### EMA Server Configuation
 
-By default, file `/etc/emadb/config` provdes the configuration options needed.
+By default, file `/etc/emadb/config.ini` provides the configuration options needed.
 This file is self explanatory. In special, the database file name and location is specified in this file.
 
 ### Reloadable Parameters
@@ -64,7 +64,7 @@ The list is listed below:
     dbase_period = 1
     # Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
     dbase_year_start = 2015
-    dbase_year_end   = 2035
+    dbase_year_end   = 2025
     # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
     dbase_log = DEBUG
 
@@ -78,10 +78,10 @@ The list is listed below:
 ### Logging
 
 Log file is usually placed under `/var/log/emad.log`. 
-Default log level is INFO. It generates very litte logging at this level
+Default log level is `INFO`. It generates very litte logging at this level.
 File is rotated by the application itself. Two strategies are supported:
 
-+ Daily rotations at midnight. Useful if the service runs for a long time
++ Daily rotations at midnight. Useful if the service runs for a long time.
 + Size-based rotation. Useful if service is starte/stopped several times during the day.
 
 ## Operation
@@ -102,25 +102,25 @@ The `service emadb reload` will keep the MQTT connection intact.
 
 ### On hold mode
 
-The service can be set to an *on_hold* mode where incoming messages are enqueued in RAM
+The service can be set to an *on_hold* mode where incoming messages are enqueued in RAM.
 instead of being written to the SQLite file. This can be useful to perform various database maintenance activities, whcih can include:
 
 * Data Migration & clean up
 * VACUUM
 * etc.
 
-To do so, set the `on_hold` flag in the config file to yes and reload
+To do so, set the `on_hold` flag in the config file to yes and reload.
 
 ### Updating the registered stations list ##
 
-emadb will only insert incoming MQTT data if the EMA station is previously registered in the database.While you can update the database itself using SQL commands, the preferred approach is to edit the master dimension JSON files, usually stored in the `/etc/emadb` directory.
+emadb will only insert incoming MQTT data if the EMA station is previously registered in the database. While you can update the database itself using SQL commands, the preferred approach is to edit the master dimension JSON files, usually stored in the `/etc/emadb` directory.
 
 Edit the files using your favorite editor. Beware, JSON is picky with the syntax.
 
 To **append** new data in these files, simply reload or restart the service.
 To **modify** existing data (i.e. changing longitude, latitude of existing stations), use the emadbload utility.
 
-Type `sudo emadbload -h` to see the command line arguments
+Type `sudo emadbload -h` to see the command line arguments.
 
 ### Real Time Data 
 
@@ -131,7 +131,7 @@ Real time status messages are stored in this table. If the service runs in the b
 ## Data Model
 
 The data model follows the [dimensional modelling approach by Ralph Kimball]
-(https://en.wikipedia.org/wiki/Dimensional_modeling)
+(https://en.wikipedia.org/wiki/Dimensional_modeling).
 
 ### Dimension Tables
 
@@ -147,7 +147,7 @@ The Ùnits` table is what Dr. Kimball denotes as a *junk dimension*.
 
 * `MinMaxHistory` : fact table contaning hourly minima and maxima measurements ffrom EMA weather stations.
 
-* `RealTimeSamples` : fact table containing current EMA status messages
+* `RealTimeSamples` : fact table containing current EMA status messages.
 
 ### DDL
 
