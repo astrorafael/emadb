@@ -32,6 +32,7 @@ import server
 import mqttclient
 import dbwritter
 import os
+import errno
 
 # Only Python 2
 import ConfigParser as parser
@@ -43,8 +44,8 @@ class EMADBServer(server.Server):
         
     def __init__(self, configfile=None):
         if not (configfile != None and os.path.exists(configfile)):
-            log.error("No configuration is given. Exiting ...")
-            return
+            log.error("No configuration file found: %s", configfile)
+            raise IOError(errno.ENOENT,"No such file or directory",configfile)
         log.info("Loading configuration from %s" % configfile)
 
         server.Server.__init__(self)

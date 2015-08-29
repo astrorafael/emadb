@@ -1,2 +1,2 @@
 #!/bin/bash
-python -OO -m emadb -k -c /etc/emadb/config
+python -OO -m emadb -k -c /etc/emadb/config.ini
