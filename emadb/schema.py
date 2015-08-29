@@ -74,13 +74,13 @@ def fromJSON(file_path):
 class Date(object):
 
     ONE         = datetime.timedelta(days=1)
-    START_DATE  = datetime.date(2015,1,1)
-    END_DATE    = datetime.date(2025,12,31)
 
-    def __init__(self, conn):
+    def __init__(self, conn, year_start, year_end):
         '''Create and Populate the SQLite Date Table'''
         self.__cursor  = conn.cursor()
         self.__conn  = conn
+        self.__start = datetime.date(year_start,1,1)
+        self.__end   = datetime.date(year_end,12,31)
 
     def generate(self, replace):
         self.table()
@@ -114,7 +114,7 @@ class Date(object):
 
     def populate(self, replace):
         '''Populate the SQLite Date Table'''
-        dates = self.rows(startDate = Date.START_DATE, endDate = Date.END_DATE)
+        dates = self.rows()
         if replace:
             log.info("Replacing Date Table data")
             self.__cursor.executemany(
@@ -149,9 +149,9 @@ class Date(object):
         )
 
 
-    def rows(self, startDate, endDate):
+    def rows(self):
         '''Generate a list of rows to inject into the table'''
-        date = startDate
+        date = self.__start
         dateList = [
             (
                 0,
@@ -169,7 +169,7 @@ class Date(object):
                 UNKNOWN,
             )
         ]
-        while date <= endDate:
+        while date <= self.__end:
             dateList.append(self.row(date))
             date = date + Date.ONE
         return dateList
@@ -557,9 +557,9 @@ class RealTimeSamples(object):
         )
 
 
-def generate(connection, json_dir, replace=False):
+def generate(connection, json_dir, year_start, year_end, replace=False):
     '''Schema Generation. The main function'''
-    Date(connection).generate(replace)
+    Date(connection, year_start, year_end).generate(replace)
     TimeOfDay(connection).generate(replace)
     Station(connection,json_dir).generate(replace)
     MeasurementType(connection).generate(replace)
@@ -578,7 +578,7 @@ if __name__ == "__main__":
 		
     try:
         connection = sqlite3.connect(sys.argv[1])
-        generate(connection, 'config', replace=True)
+        generate(connection, 2015, 2025, 'config', replace=True)
     except sqlite3.Error as e:
         if connection:
             connection.rollback()

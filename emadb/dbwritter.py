@@ -385,6 +385,8 @@ class DBWritter(Lazy):
       period    = parser.getint("DBASE", "dbase_period")
       self.period = period
       self.setPeriod(60*period)
+      year_start  = parser.getint("DBASE", "dbase_year_start")
+      year_end    = parser.getint("DBASE", "dbase_year_end")
       try:
          if self.__file != dbfile and self.__conn is not None:
             self.__conn.close()
@@ -392,7 +394,11 @@ class DBWritter(Lazy):
          self.__conn    = sqlite3.connect(dbfile)
          self.__cursor  = self.__conn.cursor()
          self.__file    = dbfile
-         schema.generate(self.__conn, json_dir, replace=False)
+         schema.generate(self.__conn,
+                         json_dir,
+                         year_start,
+                         year_end,
+                         replace=False)
       except sqlite3.Error as e:
          log.error("Error %s:", e.args[0])
          if self.__conn:
