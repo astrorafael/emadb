@@ -29,8 +29,8 @@ cp -vf scripts/emadb.sh  /usr/local/bin/emadb
 chmod 0755 /usr/local/bin/emadb
 
 # emadb loader
-cp -vf scripts/emadbloader.py  /usr/local/bin/emadbloader
-chmod 0755 /usr/local/bin/emadbloader
+cp -vf scripts/emadbload.py  /usr/local/bin/emadbload
+chmod 0755 /usr/local/bin/emadbload
 
 # init.d service script
 cp -vf emadb.init.sh /etc/init.d/emadb
