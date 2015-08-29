@@ -26,8 +26,8 @@ import sys
 
 if os.name == "nt":
    import winservice
-ellsif os.name == "posix:
+elif os.name == "posix":
    import linservice
-else
+else:
    print("ERROR: unsupported OS")
    sys.exit(1)
