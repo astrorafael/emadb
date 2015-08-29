@@ -4,17 +4,17 @@
 # Each station is a list with the following fields:
 # ----------------------------
 #    [
-#        station_id (integer),
-#        mqtt_id    (string)
-#        name       (string). 
-#        owner      (string),
-#        location   (string),
-#        province   (string),
-#        longitude  (float),
-#        long_text  (string), 
-#        latitude   (float),
-#        lat_text   (string), 
-#        elevation  (float),
+#            station_id     INTEGER, 
+#            mqtt_id        TEXT,
+#            name           TEXT,
+#            owner          TEXT,
+#            location       TEXT,
+#            province       TEXT,
+#            longitude      REAL,
+#            long_text      TEXT,
+#            latitude       REAL,
+#            lat_text       TEXT,
+#            elevation      REAL
 #    ], 
 # ----------------------------
 
