@@ -329,6 +329,28 @@ class RealTimeSamples(object):
          lag,                                 # lag
       )
 
+   def purge(self):
+      '''Purges database'''
+      now = datetime.datetime.utcnow()
+      midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+      delta = datetime.timedelta(minutes=2*self.__paren.period)
+      if now - midnight < delta:
+         self.delete(now.year*10000 + now.month*100 +now.day)
+
+   def delete(self, date_id):
+      '''Delete samples older than a given date_id'''
+      log.debug("Delete RealTimeSamples Table data older than %d", date_id)
+      try:
+         self.__cursor.execute(
+            "DELETE FROM RealTimeSamples WHERE date_id < ?", (date_id,))
+      except sqlite3.Error, e:
+         log.error(e)
+         self.__conn.rollback()
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+      rc = self.rowcount()
+      log.debug("samples deleted rows (%d)", self.__rowcount - rc)
+      self.__rowcount = rc
 
 
 # ==========
@@ -342,6 +364,7 @@ class DBWritter(Lazy):
    def __init__(self, ema, parser):
       Lazy.__init__(self, 60)
       self.ema        = ema
+      self.period     = 1
       self.__rtwrites = 0
       self.__parser   = parser
       self.__file     = None
@@ -360,6 +383,7 @@ class DBWritter(Lazy):
       dbfile    = parser.get("DBASE", "dbase_file")
       json_dir  = parser.get("DBASE", "dbase_json_dir")
       period    = parser.getint("DBASE", "dbase_period")
+      self.period = period
       self.setPeriod(60*period)
       try:
          if self.__file != dbfile and self.__conn is not None:
@@ -438,6 +462,7 @@ class DBWritter(Lazy):
       Write blocking behaviour.
       '''
       log.debug("work()")
+      self.realtime.purge()
 
    # ------------------------------------
    # Dimensions SQL Lookup helper methods
