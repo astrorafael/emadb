@@ -1,5 +1,3 @@
-* No cascar la BD cuando hay un error de insercion por locking
-
 * Ya se por que casca el Ansible con el restart. Tiene  que ver con el nombre
 del servicion. Mejorar el script del servicio
 
