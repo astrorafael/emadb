@@ -376,7 +376,7 @@ class DBWritter(Lazy):
          raise
       self.minmax.reload(self.__conn)
       self.realtime.reload(self.__conn)
-      log.info("Reload complete")
+      log.debug("Reload complete")
       
 
    # -----------

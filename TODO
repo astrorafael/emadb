@@ -1,4 +1,3 @@
-* flush() on_hold()
 * mejorar el emadbload para que acepte parametros
 * Introducir DDDº MM' SS"
 * No cascar la BD cunado hay un error de insercion por locking

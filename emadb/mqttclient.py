@@ -109,7 +109,7 @@ class MQTTClient(Lazy):
       self.__newtopics = [ (topic, MQTTClient.QoS) for topic in topics ] 
       if self.__state == CONNECTED:
          self.subscribe()
-      log.info("Reload complete")
+      log.debug("Reload complete")
 
    # ----------------------------------------
    # Implement MQTT Callbacks

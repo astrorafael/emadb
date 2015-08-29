@@ -84,10 +84,26 @@ class EMADBServer(server.Server):
     # Queue Handing
     # -------------
 
-    def hold(self, flag):
+    def hold(self, stopped):
         '''Stop/Resume enqueing messages from the queue'''
-        self.__stopped = flag
-        log.info("on hold = %s", flag)
+        log.info("on hold = %s", stopped)
+        if self.__stopped and not stopped:
+            log.info("flushing queues")
+            self.flush()
+        self.__stopped = stopped
+
+
+    def flush(self):
+        '''Flushes queues, sending messages to destination'''
+        while len(self.__queue['minmax']):
+            item = self.__queue['minmax'].pop(0)
+            self.dbwritter.processMinMax(item[0], item[1])
+        while len(self.__queue['status']):
+            item = self.__queue['status'].pop(0)
+            self.dbwritter.processStatus(item[0], item[1])
+        while len(self.__queue['samples']):
+            item = self.__queue['samples'].pop(0)
+            self.dbwritter.processSamples(item[0], item[1])
 
     def onMinMaxMessage(self, mqtt_id, payload):
         self.__queue['minmax'].append((mqtt_id, payload))
