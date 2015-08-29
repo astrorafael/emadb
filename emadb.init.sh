@@ -21,7 +21,7 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Set default values before reading /etc/default/$NAME
 LOG_FILE=/var/log/$NAME.log
-CONFIG_FILE=/etc/$NAME/config
+CONFIG_FILE=/etc/$NAME/config.ini
 BY_SIZE=""
 MAX_BYTES=1000000
 

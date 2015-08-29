@@ -22,7 +22,7 @@
 # ----------------------------------------------------------------------
 
 # Config file path for the EMA Service
-CONFIG_FILE="/etc/emadb/config"
+CONFIG_FILE="/etc/emadb/config.ini"
 
 # Log file path for the EMA service
 LOG_FILE="/var/log/emadb.log"
