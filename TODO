@@ -1,4 +1,3 @@
-* Introducir DDDº MM' SS"
 * No cascar la BD cunado hay un error de insercion por locking
 * mejorar README.dm
   - describir los parametros reloadables
