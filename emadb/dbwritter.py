@@ -61,6 +61,8 @@ from emaproto  import SMTB, SMTE, MTCUR, MTHIS, MTISO, MTMIN, MTMAX
 
 log = logging.getLogger('dbwritter')
 
+DATABASE_LOCKED = "database is locked"
+
 # ===============================
 # Extract and Transform Functions
 # ===============================
@@ -200,28 +202,42 @@ class MinMaxHistory(object):
          TYP_MAX:  paren.lkType(TYP_MAX),
       }      
 
+
    def rowcount(self):
       '''Find out the current row count'''
       self.__cursor.execute("SELECT count(*) FROM MinMaxHistory")
       return self.__cursor.fetchone()[0]
 
+
    def insert(self, rows):
       '''Update the MinMaxHistory Fact Table'''
-      log.info("Update MinMaxHistory Table data")
+      log.debug("MinMaxHistory: updating table")
       try:
          self.__cursor.executemany(
             "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
-         log.warn("Overlapping rows")  
+         log.warn("MinMaxHistory: overlapping rows")  
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("MinMaxHistory: %d rows starting from %s cound not be written: %s",
+                   len(rows),
+                   rows[0][0:4],
+                   DATABASE_LOCKED
+                )
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
          raise
       self.__conn.commit()   # commit anyway what was really updated
-      rc = self.rowcount()
-      log.info("minmax commited rows (%d/%d)", rc - self.__rowcount, len(rows))
-      self.__rowcount = rc
+      rowcount = self.rowcount()
+      commited = rowcount -  self.__rowcount
+      self.__rowcount = rowcount
+      log.debug("MinMaxHistory: commited rows (%d/%d)", commited, len(rows))
+      return  commited
+
 
    def row(self, date_id, time_id, station_id, message):
       '''Produces one minmax row to be inserted into the database'''
@@ -283,23 +299,36 @@ class RealTimeSamples(object):
       self.__cursor.execute("SELECT count(*) FROM RealTimeSamples")
       return self.__cursor.fetchone()[0]
 
+
    def insert(self, rows):
       '''Update the RealTimeSamples Fact Table'''
-      log.debug("Update RealTimeSamples Table data")
+      log.debug("RealTimeSamples: updating table")
       try:
          self.__cursor.executemany(
             "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
-         log.warn("Overlapping rows")  
+         log.warn("RealTimeSamples: overlapping rows")
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("RealTimeSamples: %d rows starting from %s cound not be written: %s",
+                   len(rows),
+                   rows[0][0:3],
+                   DATABASE_LOCKED
+                )  
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
          raise
       self.__conn.commit()   # commit anyway what was really updated
-      rc = self.rowcount()
-      log.debug("samples commited rows (%d/%d)", rc - self.__rowcount, len(rows))
-      self.__rowcount = rc
+      rowcount = self.rowcount()
+      commited = rowcount -  self.__rowcount
+      self.__rowcount = rowcount
+      log.debug("RealTimeSamples: commited rows (%d/%d)", commited, len(rows))
+      return  commited
+
 
    def row(self, date_id, time_id, station_id, lag, message):
       '''Produces one real time row to be inserted into the database'''
@@ -329,6 +358,7 @@ class RealTimeSamples(object):
          lag,                                 # lag
       )
 
+
    def purge(self):
       '''Purges database'''
       now = datetime.datetime.utcnow()
@@ -343,6 +373,13 @@ class RealTimeSamples(object):
       try:
          self.__cursor.execute(
             "DELETE FROM RealTimeSamples WHERE date_id < ?", (date_id,))
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.error("Table coud not be purged: %s",
+                   DATABASE_LOCKED
+                )
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
@@ -375,18 +412,19 @@ class DBWritter(Lazy):
       self.reload()
       log.info("DBWritter object created")
 
+
    def reload(self):
       '''Reload config data and reconfigure itself'''
-      parser = self.__parser
-      lvl      = parser.get("DBASE", "dbase_log")
-      log.setLevel(lvl)
-      dbfile    = parser.get("DBASE", "dbase_file")
-      json_dir  = parser.get("DBASE", "dbase_json_dir")
-      period    = parser.getint("DBASE", "dbase_period")
-      self.period = period
-      self.setPeriod(60*period)
+      parser      = self.__parser
+      lvl         = parser.get("DBASE", "dbase_log")
+      dbfile      = parser.get("DBASE", "dbase_file")
+      json_dir    = parser.get("DBASE", "dbase_json_dir")
+      period      = parser.getint("DBASE", "dbase_period")
       year_start  = parser.getint("DBASE", "dbase_year_start")
       year_end    = parser.getint("DBASE", "dbase_year_end")
+      log.setLevel(lvl)
+      self.period = period
+      self.setPeriod(60*period)
       try:
          if self.__file != dbfile and self.__conn is not None:
             self.__conn.close()
@@ -399,6 +437,13 @@ class DBWritter(Lazy):
                          year_start,
                          year_end,
                          replace=False)
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("Dimension Table could not be populated: %s",
+                   DATABASE_LOCKED
+                )
       except sqlite3.Error as e:
          log.error("Error %s:", e.args[0])
          if self.__conn:
@@ -449,8 +494,7 @@ class DBWritter(Lazy):
       log.debug("Received status message from station %s (lag = %d)",
                 mqtt_id, lag)
       row = self.realtime.row(date_id, time_id, station_id, lag, message[0])
-      self.realtime.insert((row,))
-      self.__rtwrites += 1
+      self.__rtwrites += self.realtime.insert((row,))
       if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
          log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)
 
