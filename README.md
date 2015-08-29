@@ -3,8 +3,9 @@
 Linux service to collect measurements pubished by EMA via MQTT.
 EMA stands for [Cristobal Garcia's EMA Weather Station](http://www.observatorioremoto.com/emav2/meteoen.htm)
 
-Description
------------
+This service is designed to run in cooperation with my [ema Server also available in GitHub](https://github.com/astrorafael/ema).
+
+## Description
 
 **emadb** is a software package that collects measurements from one or several
 EMA wheather stations into a SQLite Database. 
