@@ -1,3 +1,3 @@
-python  -m emadb stop
-python - m emadb remove
+python -m emadb stop
+python -m emadb remove
 pause

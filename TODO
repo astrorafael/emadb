@@ -14,3 +14,17 @@
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
   http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
+
+Windoes
+- python 2.7.10
+- pythonwin
+- paho mqtt via pip install
+
+$ pip install paho-mqtt
+You are using pip version 7.0.1, however version 7.1.2 is available.
+You should consider upgrading via the 'pip install --upgrade pip' command.
+Collecting paho-mqtt
+  Downloading paho-mqtt-1.1.tar.gz (41kB)
+Installing collected packages: paho-mqtt
+  Running setup.py install for paho-mqtt
+Successfully installed paho-mqtt-1.1

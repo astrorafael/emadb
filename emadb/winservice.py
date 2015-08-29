@@ -53,22 +53,6 @@ def parser():
     return _parser
 
 
-opts = parser().parse_args()
-if opts.console:
-    logToConsole()
-    
-if opts.log_file:
-    logToFile(opts.log_file, opts.by_size, opts.max_size)
-
-	
-	
-logging.getLogger().info("Starting %s" % VERSION_STRING)
-if os.name == 'nt'
-server = EMADBServer(opts.config or CONFIGFILE)
-server.run()    # Looping  until exception is caught
-server.stop()
-
-
 class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 	"""
 	Windows service that launches several Internet monitoring tasks in background.
@@ -94,13 +78,13 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 			
 		logging.getLogger().info("Starting %s" % VERSION_STRING)
 		self.server = EMADBServer(opts.config or CONFIGFILE)
-		#self.server.addLazy(self)
+		self.server.addLazy(self)
 
 		
 	def work(self):
 		"""Process Windows events and raises except if STOP SERVICE event is detected"""
 		# Wait for service stop signal for that given amount of time
-		rc = win32event.WaitForSingleObject(self.hWaitStop,  1*1000) )
+		rc = win32event.WaitForSingleObject(self.hWaitStop,  1*1000 )
 		# Check to see if self.hWaitStop happened
 		if rc == win32event.WAIT_OBJECT_0:
 			# Stop signal encountered
@@ -120,13 +104,14 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		
 			
 def ctrlHandler(ctrlType):
-   return True
-	
-	
-if __name__ == "__main__":
-	if sys.argv[1] == "start":
-		sys.argv.append(os.getcwd())
-	win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-	win32serviceutil.HandleCommandLine(WindowsService)
-	
+	return True
+
+import os.path
+
+if sys.argv[1] == "start":
+	LOGFILE = os.path.join('Documents and Settings','Rafael','emadb','my.log')
+	CONFIG_FILE = os.path.join('Documents and Settings','Rafael','emadb','config,','config.ini')
+	sys.argv.append("--log-file " + LOGFILE + "--max-size 1000000 --config-file " + CONFIG_FILE)
+win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
+win32serviceutil.HandleCommandLine(WindowsService)
 	
