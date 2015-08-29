@@ -1,4 +1,3 @@
-* Año final de la dimension Date configurable
 * No cascar la BD cunado hay un error de insercion por locking
 * mejorar README.dm
   - describir los parametros reloadables
