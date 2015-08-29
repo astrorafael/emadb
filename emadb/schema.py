@@ -294,9 +294,9 @@ class Station(object):
             location       TEXT,
             province       TEXT,
             longitude      REAL,
-            long_text      TEXT,
+            longitude_text TEXT,
             latitude       REAL,
-            lat_text       TEXT,
+            latitude_text  TEXT,
             elevation      REAL
             );
             """
