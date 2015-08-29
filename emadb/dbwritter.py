@@ -385,9 +385,12 @@ class RealTimeSamples(object):
          self.__conn.rollback()
          raise
       self.__conn.commit()   # commit anyway what was really updated
-      rc = self.rowcount()
-      log.debug("samples deleted rows (%d)", self.__rowcount - rc)
-      self.__rowcount = rc
+      rowcount = self.rowcount()
+      commited = rowcount -  self.__rowcount
+      self.__rowcount = rowcount
+      log.debug("RealTimeSamples: deleted %d rows", commited)
+      return  commited
+
 
 
 # ==========
@@ -398,9 +401,9 @@ class DBWritter(Lazy):
 
    N_RT_WRITES = 60
 
-   def __init__(self, ema, parser):
+   def __init__(self, srv, parser):
       Lazy.__init__(self, 60)
-      self.ema        = ema
+      self.srv        = srv
       self.period     = 1
       self.__rtwrites = 0
       self.__parser   = parser
@@ -408,7 +411,7 @@ class DBWritter(Lazy):
       self.__conn     = None
       self.minmax     = MinMaxHistory(self)
       self.realtime   = RealTimeSamples(self)
-      ema.addLazy(self)
+      srv.addLazy(self)
       self.reload()
       log.info("DBWritter object created")
 

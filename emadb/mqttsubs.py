@@ -237,6 +237,3 @@ class MQTTGenericSubscriber(Lazy):
             self.state = FAILED
             raise
 
-
-if __name__ == "__main__":
-      pass
