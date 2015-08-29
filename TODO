@@ -1,11 +1,5 @@
-* No cascar la BD cunado hay un error de insercion por locking
-* mejorar README.dm
-  - describir los parametros reloadables
-  - nuevo pararmetro reloadable dbase_year
-  - seccion de operacion
-    - arranque / parada / restart (=> cuando es nrecesraio restart)
-    - reload en caliente
-    - vacuum a mano
+* No cascar la BD cuando hay un error de insercion por locking
+
 * Ya se por que casca el Ansible con el restart. Tiene  que ver con el nombre
 del servicion. Mejorar el script del servicio
 
