@@ -10,14 +10,14 @@ This service is designed to run in cooperation with my [ema Server also availabl
 **emadb** is a software package that collects measurements from one or several
 EMA wheather stations into a SQLite Database. 
 
-Reporting applicatons may query the database to generate repots and graphs
-using historic data. You can also monitor current station status
+Desktop applicatons may query the database to generate reports and graphs
+using historic data. You can also monitor current station status.
 
 Three data sources are available:
 
 + Per hour minima and maxima values (historic data)
-+ 5 min. individual samples (historic data) (NOT YET IMPLEMENTED)
 + individual samples (real time, 1 min. aprox)
++ 5 min. individual samples (historic data) (NOT YET IMPLEMENTED)
 
 **Warning**: Time handled by EMA is UTC, not local time.
 
@@ -33,9 +33,14 @@ All executables are copied to /usr/local/bin
 
 Type `sudo emadb` to start the service in foreground with console output
 
-An available startup service script for debian-based systems is provided. 
+An available startup service script for Debian based systems is provided. 
+
 Type `sudo service emad start` to start it.
 Type `sudo update-rc.d emad defaults` to install it at boot time.
+
+### Windows installation
+
+NOT YET AVAILABLE
 
 ### EMA Server Configuation
 
