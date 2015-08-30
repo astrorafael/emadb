@@ -27,18 +27,18 @@ import logging
 import argparse
 import errno
 
-
-import logger
-import default
-from server          import Lazy
-from emadbserver import EMADBServer
-
 import win32service
 import win32serviceutil
 import win32api
 import win32con
 import win32event
 import win32evtlogutil
+import servicemanager  
+
+import logger
+import default
+from server          import Lazy
+from emadbserver import EMADBServer
 import cmdline
 
 class WindowsService(win32serviceutil.ServiceFramework, Lazy):
@@ -55,7 +55,7 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		win32serviceutil.ServiceFramework.__init__(self, args)
 		Lazy.__init__(self,1)
 		self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-		self.server = EMADBServer(ccmdline.parse_args(args=args))
+		self.server = EMADBServer(cmdline.parser().parse_args(args=args))
 		self.server.addLazy(self)
 
 		
@@ -76,7 +76,6 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
 	
 	def SvcDoRun(self):
-		import servicemanager      
 		servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, '')) 
 		servicemanager.LogInfoMsg("RAFA RUN")
 		while True:
@@ -87,6 +86,7 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 			
 def ctrlHandler(ctrlType):
 	return True
-	
-win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-win32serviceutil.HandleCommandLine(WindowsService)
+
+if not servicemanager.RunningAsService():	
+	win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
+	win32serviceutil.HandleCommandLine(WindowsService)
