@@ -33,16 +33,36 @@ import mqttclient
 import dbwritter
 import os
 import errno
+import argparse
+
+from logger      import logToConsole, logToFile, sysLogInfo, sysLogError
+from default     import VERSION, VERSION_STRING, CONFIGFILE
 
 # Only Python 2
-import ConfigParser as parser
+import ConfigParser
 
 
 log = logging.getLogger('emadb')
 
+def parser():
+    '''Create the command line interface options'''
+    _parser = argparse.ArgumentParser(prog='emadb')
+    _parser.add_argument('--version', action='version', version='%s' % VERSION_STRING)
+    _parser.add_argument('-l' , '--log-file', type=str, action='store', metavar='<log file>', help='log to file')
+    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
+    _parser.add_argument('-s' , '--by-size', action='store_true', help='rotate log by size. If no set, rotate every midnight')
+    _parser.add_argument('-m' , '--max-size', type=int , default=1000000, help='logfile max size when rotating by size')
+    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
+    return _parser
+
 class EMADBServer(server.Server):
         
     def __init__(self, configfile=None):
+
+        self.parseCmdLine()
+        configfile = self.opts.config
+        self.opts = None
+
         if not (configfile != None and os.path.exists(configfile)):
             log.error("No configuration file found: %s", configfile)
             raise IOError(errno.ENOENT,"No such file or directory",configfile)
@@ -56,7 +76,7 @@ class EMADBServer(server.Server):
         }
         self.__stopped = False
         self.__configfile = configfile
-        self.__parser = parser.ConfigParser()
+        self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
         self.__parser.read(configfile)
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
@@ -66,6 +86,13 @@ class EMADBServer(server.Server):
         # MQTT Driver object 
         self.mqttclient = mqttclient.MQTTClient(self, self.__parser)
 
+    def parseCmdLine(self):
+        self.opts = parser().parse_args()
+        if self.opts.console:
+            logToConsole()
+        if self.opts.log_file:
+            logToFile(opts.log_file, opts.by_size, opts.max_size)
+    
     def reload(self):
         '''To be called *only* on SIGHUP or similar reload method'''
         log.info("=======================")

@@ -36,14 +36,17 @@ import os
 
 from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 
+sysLogInfo = None
+sysLogError = None
+
 if os.name == "nt":
 	import servicemanager
-	SysLogInfo = servicemanager.LogInfoMsg
-	SysLogError = servicemanager.LogErrorMsg
+	sysLogInfo = servicemanager.LogInfoMsg
+	sysLogError = servicemanager.LogErrorMsg
 else:
 	import syslog
-	SysLogInfo = syslog.syslog
-	SysLogError = syslog.syslog
+	sysLogInfo = syslog.syslog
+	sysLogError = syslog.syslog
 
 	
 # ----------------------
