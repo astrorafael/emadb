@@ -58,17 +58,21 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 	Windows service that launches several Internet monitoring tasks in background.
 	"""
 	_svc_name_            = "emadb"
-	_svc_display_name_ = "emadb - EMA dtatabase"
+	_svc_display_name_ = "emadb - EMA database"
 	_svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
 
 	
 	def __init__(self, args):
 		
-		import config
 		win32serviceutil.ServiceFramework.__init__(self, args)
 		Lazy.__init__(self,1)
 		self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
+		servicemanager.LogInfoMsg("RAFA INICIA")
 		
+		LOGFILE = os.path.join('Documents and Settings','Rafael','emadb','my.log')
+		CONFIG_FILE = os.path.join('Documents and Settings','Rafael','emadb','config,','config.ini')
+		sys.argv.append("--log-file " + LOGFILE + "--max-size 1000000 --config-file " + CONFIG_FILE)
+	
 		opts = parser().parse_args()
 		if opts.console:
 			logToConsole()
@@ -95,10 +99,14 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
 		win32event.SetEvent(self.hWaitStop)
 		self.logger.warn("Stopping  emadb service")
+		servicemanager.LogInfoMsg("RAFA PARA")
 	
 	def SvcDoRun(self):
 		import servicemanager      
 		servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, '')) 
+		servicemanager.LogInfoMsg("RAFA RUN")
+		while True:
+			self.work()
 		server.run()    # Looping  until exception is caught
 		server.stop()
 		
@@ -108,10 +116,6 @@ def ctrlHandler(ctrlType):
 
 import os.path
 
-if sys.argv[1] == "start":
-	LOGFILE = os.path.join('Documents and Settings','Rafael','emadb','my.log')
-	CONFIG_FILE = os.path.join('Documents and Settings','Rafael','emadb','config,','config.ini')
-	sys.argv.append("--log-file " + LOGFILE + "--max-size 1000000 --config-file " + CONFIG_FILE)
 win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
 win32serviceutil.HandleCommandLine(WindowsService)
-	
+
