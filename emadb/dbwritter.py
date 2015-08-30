@@ -425,6 +425,8 @@ class DBWritter(Lazy):
       period      = parser.getint("DBASE", "dbase_period")
       year_start  = parser.getint("DBASE", "dbase_year_start")
       year_end    = parser.getint("DBASE", "dbase_year_end")
+      purge_flag  = parser.getboolean("DBASE", "dbase_purge")
+      self.__purge = purge_flag
       log.setLevel(lvl)
       self.period = period
       self.setPeriod(60*period)
@@ -515,7 +517,8 @@ class DBWritter(Lazy):
       Write blocking behaviour.
       '''
       log.debug("work()")
-      self.realtime.purge()
+      if self.__purge:
+         self.realtime.purge()
 
    # ------------------------------------
    # Dimensions SQL Lookup helper methods

@@ -92,7 +92,7 @@ class MQTTGenericSubscriber(Lazy):
       self.host     = parser.get("MQTT", "mqtt_host")
       self.port     = parser.getint("MQTT", "mqtt_port")
       self.mqtt     = mqtt.Client(client_id=self.id+'@'+ socket.gethostname(), 
-                                  userdata=self)
+                                  clean_session=False, userdata=self)
       self.mqtt.on_connect     = on_connect
       self.mqtt.on_disconnect  = on_disconnect
       self.mqtt.on_message     = on_message
