@@ -98,7 +98,7 @@ class EMADBServer(server.Server):
         log.info("=======================")
         log.info("RELOADING CONFIGURATION")
         log.info("=======================")
-        self.__parser.read(self.__configfile)
+        self.__parser.read(self.__cfgfile)
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
         self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
         self.mqttclient.reload()
