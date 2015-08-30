@@ -23,6 +23,18 @@ Three data sources are available:
 
 ## Installation & Configuration
 
+### Requirements
+
+The following components should be installed first:
+
+ * python 2.7.x (tested on Ubunti python 2.7.6 & Windows XP python 2.7.10)
+ * [Python PAHO MQTT module](https://pypi.python.org/pypi/paho-mqtt/1.1), downloadable via pip (Linux/Windows)
+ * [Python for Windows Extensions](http://sourceforge.net/projects/pywin32/). Must choose python27 builds. (tested on build 219, for python27 windows 32bits)
+
+The Windows python 2.7 distro comes with the pip utility included. Open a CMD window and type:
+
+    pip install paho-mqtt
+    
 ### Linux installation (Debian)
 
 Simply type:
@@ -71,6 +83,10 @@ The list is listed below:
     # Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
     dbase_year_start = 2015
     dbase_year_end   = 2025
+    # Auto Purge RealTimeSamples table every day (at midnight UTC)
+    # or let it grow
+    dbase_purge = no
+
     # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
     dbase_log = DEBUG
 
