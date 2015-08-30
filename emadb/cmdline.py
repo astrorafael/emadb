@@ -21,6 +21,29 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
+
+# Command line parser for the various cominations of OS and execution modes
+#
+# Possibilities:
+# 1) Linux, foreground mode
+#    python -m emadb --console --config /etc/emadb/config
+#
+# 2) Linux, service mode
+#    python -m emadb --config /etc/emadb/config
+#
+# 3) Windows, foreground mode
+#   python -m emadb  --foreground --console  --config "config\config.ini"
+#
+# 4) Windows, service mode (order is important!)
+#   4.1 install the service
+#     python -m emadb install
+#   4.2 start the service
+#     python -m emadb start --config "config\config.ini"
+#   4.3 stop the service
+#     python -m emadb stop
+#   4.4 remove the service
+#     python -m emadb remove
+
 import sys
 import logging
 import argparse
