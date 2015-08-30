@@ -20,10 +20,8 @@ SCRIPTNAME=/etc/init.d/$NAME
 #HOME=/
 
 # Set default values before reading /etc/default/$NAME
-LOG_FILE=/var/log/$NAME.log
-CONFIG_FILE=/etc/$NAME/config.ini
-BY_SIZE=""
-MAX_BYTES=1000000
+CONFIG_FILE=/etc/$NAME/config
+
 
 # Exit if the package is not installed
 [ -x "$DAEMON" ] || exit 0
@@ -39,7 +37,7 @@ MAX_BYTES=1000000
 # and status_of_proc is working.
 . /lib/lsb/init-functions
 
-DAEMON_ARGS="-m emadb --log-file $LOG_FILE $BY_SIZE --max-size $MAX_BYTES --config $CONFIG_FILE"
+DAEMON_ARGS="-m emadb --config $CONFIG_FILE"
 
 #
 # Function that starts the daemon/service

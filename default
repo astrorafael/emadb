@@ -22,13 +22,6 @@
 # ----------------------------------------------------------------------
 
 # Config file path for the EMA Service
-CONFIG_FILE="/etc/emadb/config.ini"
+CONFIG_FILE="/etc/emadb/config"
 
-# Log file path for the EMA service
-LOG_FILE="/var/log/emadb.log"
 
-# set to "-s" "--by-size" when rotating by size, else set to empty string
-BY_SIZE=""
-
-# Max siz in bytes when rotating by size
-MAX_BYTES=1000000

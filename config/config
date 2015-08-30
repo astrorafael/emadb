@@ -31,6 +31,16 @@
 # Useful to perform online database maintenance
 on_hold = false
 
+# Log File settings
+log_to_file = yes
+log_file = /var/log/emadb.log
+
+# log file rotation policy, either 'time' or 'size'
+log_policy = time
+
+# File Max size in bytes when rotating by size
+log_max_size = 1000000
+
 # component log level (VERBOSE, DEBUG, INFO, WARNING, ERROR, CRITICAL, NOTSET)
 generic_log = INFO
 
@@ -72,7 +82,7 @@ mqtt_log = INFO
 dbase_file = /var/dbase/emahistory.db
 
 # Directory where JSON data is located
-dbase_json_dir = /etc/emadb/config
+dbase_json_dir = /etc/emadb
 
 # Period for periodic task execution [minutes]
 dbase_period = 5

@@ -33,10 +33,9 @@ import mqttclient
 import dbwritter
 import os
 import errno
-import argparse
 
 from logger      import logToConsole, logToFile, sysLogInfo, sysLogError
-from default     import VERSION, VERSION_STRING, CONFIGFILE
+
 
 # Only Python 2
 import ConfigParser
@@ -44,30 +43,11 @@ import ConfigParser
 
 log = logging.getLogger('emadb')
 
-def parser():
-    '''Create the command line interface options'''
-    _parser = argparse.ArgumentParser(prog='emadb')
-    _parser.add_argument('--version', action='version', version='%s' % VERSION_STRING)
-    _parser.add_argument('-l' , '--log-file', type=str, action='store', metavar='<log file>', help='log to file')
-    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-s' , '--by-size', action='store_true', help='rotate log by size. If no set, rotate every midnight')
-    _parser.add_argument('-m' , '--max-size', type=int , default=1000000, help='logfile max size when rotating by size')
-    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
-    return _parser
 
 class EMADBServer(server.Server):
         
-    def __init__(self, configfile=None):
-
-        self.parseCmdLine()
-        configfile = self.opts.config
-        self.opts = None
-
-        if not (configfile != None and os.path.exists(configfile)):
-            log.error("No configuration file found: %s", configfile)
-            raise IOError(errno.ENOENT,"No such file or directory",configfile)
-        log.info("Loading configuration from %s" % configfile)
-
+    def __init__(self, cliparser):
+        self.parseCmdLine(cliparser)
         server.Server.__init__(self)
         self.__queue = {
             'minmax':  [] ,
@@ -75,24 +55,43 @@ class EMADBServer(server.Server):
             'samples': [] ,
         }
         self.__stopped = False
-        self.__configfile = configfile
+
         self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
-        self.__parser.read(configfile)
-        log.setLevel(self.__parser.get("GENERIC", "generic_log"))
-        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
+        self.__parser.read(self.__cfgfile)
+        log.info("Loading configuration from %s", self.__cfgfile)
+        self.parseConfigFile()
+
         # DBWritter object 
         self.dbwritter = dbwritter.DBWritter(self, self.__parser)
         # MQTT Driver object 
         self.mqttclient = mqttclient.MQTTClient(self, self.__parser)
 
-    def parseCmdLine(self):
-        self.opts = parser().parse_args()
-        if self.opts.console:
+
+    def parseCmdLine(self, cliparser):
+        '''Parses the comand line looking for the config file path 
+        and optionally console output'''
+        opts = cliparser().parse_args()
+        if opts.console:
             logToConsole()
-        if self.opts.log_file:
-            logToFile(opts.log_file, opts.by_size, opts.max_size)
-    
+        self.__cfgfile = opts.config
+        if not (self.__cfgfile != None and os.path.exists(self.__cfgfile)):
+            log.error("No configuration file found: %s", self.__cfgfile)
+            raise IOError(errno.ENOENT,"No such file or directory",self.__cfgfile)
+
+
+    def parseConfigFile(self):
+        '''Parses the config file looking for its own options'''
+        log.setLevel(self.__parser.get("GENERIC", "generic_log"))
+        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
+        toFile = self.__parser.getboolean("GENERIC","log_to_file")
+        if(toFile):
+            filename = self.__parser.get("GENERIC","log_file")
+            policy = self.__parser.get("GENERIC","log_policy")
+            max_size = self.__parser.getint("GENERIC","log_max_size")
+            by_size = policy == "size" if True else False
+            logToFile(filename, by_size, max_size)
+
     def reload(self):
         '''To be called *only* on SIGHUP or similar reload method'''
         log.info("=======================")

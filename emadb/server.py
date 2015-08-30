@@ -183,44 +183,46 @@ class Server(object):
 	# and execute reload
 
 	try:
-		if self.winNT and len(self.__readables) == 0 and len(self.__writables) == 0:
-			time.sleep(timeout)
-			nreadables = []
-			nwritables = []
-		else:
-			nreadables, nwritables, _ = select.select(
-				self.__readables, self.__writables, [], timeout)
-	except select.error as e:
-		if e[0] == errno.EINTR and self.sigflag:
-			self.reload()
-			self.sigflag = False
-			return
-		raise
+            # This is a Windows specific quirk: It returns error
+            # if the select() sets are empty.
+            if self.winNT and len(self.__readables) == 0 and len(self.__writables) == 0:
+                time.sleep(timeout)
+                nreadables = []
+                nwritables = []
+            else:
+                nreadables, nwritables, _ = select.select(
+                    self.__readables, self.__writables, [], timeout)
+        except select.error as e:
+            if e[0] == errno.EINTR and self.sigflag:
+                self.reload()
+                self.sigflag = False
+                return
+            raise
 	except Exception:
-		raise
+            raise
 
-	io_activity = False 
+        io_activity = False 
 	if nreadables:
-		io_activity = True
-		for readable in nreadables:
-			readable.onInput()
+            io_activity = True
+            for readable in nreadables:
+                readable.onInput()
 			
 	if nwritables:
-		o_activity = True
-		for writable in nwritables:
-			readable.onOutput()
+            o_activity = True
+            for writable in nwritables:
+                readable.onOutput()
 
 	if not io_activity:                   
-		# Execute alarms first
-		for alarm in self.__alarmables:
-			if alarm.timeout():
-				self.delAlarmable(alarm)
-				alarm.onTimeoutDo()
+            # Execute alarms first
+            for alarm in self.__alarmables:
+                if alarm.timeout():
+                    self.delAlarmable(alarm)
+                    alarm.onTimeoutDo()
 
-		# Executes recurring work procedures last
-		for lazy in self.__lazy:
-			if lazy.mustWork():
-				lazy.work()
+            # Executes recurring work procedures last
+            for lazy in self.__lazy:
+                if lazy.mustWork():
+                    lazy.work()
     
 
     def run(self):

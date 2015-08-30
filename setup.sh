@@ -60,7 +60,7 @@ if [ ! -d "/etc/emadb" ]; then
     mkdir /etc/emadb 2>/dev/null 1>/dev/null
 fi
 
-for file in config.ini stations.json units.json
+for file in config stations.json units.json
 do
     if [ ! -f "/etc/emadb/$file" ]; then
 	cp -vf config/$file /etc/emadb/
