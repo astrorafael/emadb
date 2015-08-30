@@ -32,7 +32,7 @@ if os.name == "nt":
 	if options.foreground:
 		import linservice
 	else:
-		import winservce
+		import winservice
 elif os.name == "posix":
 	import linservice
 else:

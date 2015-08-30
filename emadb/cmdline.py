@@ -35,4 +35,10 @@ def parser():
     _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
     _parser.add_argument('-f' , '--foreground', action='store_true', help='run in foreground (Windows only)')
     _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
+    group = _parser.add_mutually_exclusive_group()
+    group.add_argument(' install',  type=str, nargs='?', help='install windows service')
+    group.add_argument(' start',  type=str, nargs='?', help='start windows service')
+    group.add_argument(' stop',  type=str, nargs='?', help='start windows service')
+    group.add_argument(' remove',  type=str, nargs='?', help='remove windows service')
+    
     return _parser
