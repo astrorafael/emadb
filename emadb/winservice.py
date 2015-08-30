@@ -39,14 +39,7 @@ import win32api
 import win32con
 import win32event
 import win32evtlogutil
-
-def cliparser():
-    '''Create the command line interface parser'''
-    _parser = argparse.ArgumentParser(prog='emadb')
-    _parser.add_argument('--version', action='version', version='%s' % default.VERSION_STRING)
-    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
-    return _parser
+import cmdline
 
 class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 	"""
@@ -62,7 +55,7 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		win32serviceutil.ServiceFramework.__init__(self, args)
 		Lazy.__init__(self,1)
 		self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-		self.server = EMADBServer(cliparser)
+		self.server = EMADBServer(ccmdline.parse_args(args=args))
 		self.server.addLazy(self)
 
 		
