@@ -58,11 +58,13 @@
 #
 # ======================================================================
 
+import os
 import errno
 import signal
 import select
 import logging
 import datetime
+import time
 from   abc import ABCMeta, abstractmethod
 
 log = logging.getLogger('server')
@@ -86,7 +88,9 @@ class Server(object):
         self.__lazy       = []
         self.sigflag      = True
         Server.instance   = self
-        signal.signal(signal.SIGHUP, sighandler)
+        self.winNT = os.name == "nt"
+        if not self.winNT:
+             signal.signal(signal.SIGHUP, sighandler)
 
     def SetTimeout(self, newT):
         '''Set the select() timeout'''
@@ -178,40 +182,45 @@ class Server(object):
         # Catch SIGHUP signal suring select()
 	# and execute reload
 
-        try:
-            nreadables, nwritables, nexceptionals = select.select(
-              self.__readables, self.__writables, [], timeout)
-        except select.error as e:
-            if e[0] == errno.EINTR and self.sigflag:
-               self.reload()
-               self.sigflag = False
-               return
-            raise
-        except Exception:
-          raise
+	try:
+		if self.winNT and len(self.__readables) == 0 and len(self.__writables) == 0:
+			time.sleep(timeout)
+			nreadables = []
+			nwritables = []
+		else:
+			nreadables, nwritables, _ = select.select(
+				self.__readables, self.__writables, [], timeout)
+	except select.error as e:
+		if e[0] == errno.EINTR and self.sigflag:
+			self.reload()
+			self.sigflag = False
+			return
+		raise
+	except Exception:
+		raise
 
-        io_activity = False
-        if nreadables:
-            io_activity = True
-            for readable in nreadables:
-                readable.onInput()
-        
-        if nwritables:
-            io_activity = True
-            for writable in nwritables:
-                readable.onOutput()
+	io_activity = False 
+	if nreadables:
+		io_activity = True
+		for readable in nreadables:
+			readable.onInput()
+			
+	if nwritables:
+		o_activity = True
+		for writable in nwritables:
+			readable.onOutput()
 
-        if not io_activity:                   
-            # Execute alarms first
-            for alarm in self.__alarmables:
-                if alarm.timeout():
-                    self.delAlarmable(alarm)
-                    alarm.onTimeoutDo()
+	if not io_activity:                   
+		# Execute alarms first
+		for alarm in self.__alarmables:
+			if alarm.timeout():
+				self.delAlarmable(alarm)
+				alarm.onTimeoutDo()
 
-            # Executes recurring work procedures last
-            for lazy in self.__lazy:
-                if lazy.mustWork():
-                    lazy.work()
+		# Executes recurring work procedures last
+		for lazy in self.__lazy:
+			if lazy.mustWork():
+				lazy.work()
     
 
     def run(self):
