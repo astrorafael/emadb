@@ -33,6 +33,7 @@ import mqttclient
 import dbwritter
 import os
 import errno
+import sys
 
 from logger      import logToConsole, logToFile, sysLogInfo, sysLogError
 
@@ -46,8 +47,8 @@ log = logging.getLogger('emadb')
 
 class EMADBServer(server.Server):
         
-    def __init__(self, cliparser):
-        self.parseCmdLine(cliparser)
+    def __init__(self, options):
+        self.parseCmdLine(options)
         server.Server.__init__(self)
         self.__queue = {
             'minmax':  [] ,
@@ -68,10 +69,10 @@ class EMADBServer(server.Server):
         self.mqttclient = mqttclient.MQTTClient(self, self.__parser)
 
 
-    def parseCmdLine(self, cliparser):
+    def parseCmdLine(self, opts):
         '''Parses the comand line looking for the config file path 
         and optionally console output'''
-        opts = cliparser().parse_args()
+        sysLogInfo("argv[] array is %s" % str(sys.argv)) 
         if opts.console:
             logToConsole()
         self.__cfgfile = opts.config

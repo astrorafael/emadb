@@ -1,2 +1,2 @@
-python -m emadb -k  -c "config\config.ini"
+python -m emadb  --foreground --console  --config "config\config.ini"
 pause

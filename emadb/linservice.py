@@ -28,16 +28,9 @@ import logger
 
 import default
 from emadbserver import EMADBServer
-
-def cliparser():
-    '''Create the command line interface parser'''
-    _parser = argparse.ArgumentParser(prog='emadb')
-    _parser.add_argument('--version', action='version', version='%s' % default.VERSION_STRING)
-    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
-    return _parser
+import cmdline
 	
 logger.sysLogInfo("Starting %s" % default.VERSION_STRING)
-server = EMADBServer(cliparser)
+server = EMADBServer(cmdline.parser().parse_args())
 server.run()    # Looping  until exception is caught
 server.stop()

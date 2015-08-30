@@ -21,20 +21,18 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
-import os
 import sys
+import logging
+import argparse
+import logger
 
-import cmdline
+import default
 
-options = cmdline.parser().parse_args()
-
-if os.name == "nt":
-	if options.foreground:
-		import linservice
-	else:
-		import winservce
-elif os.name == "posix":
-	import linservice
-else:
-	print("ERROR: unsupported OS")
-	sys.exit(1)
+def parser():
+    '''Create the command line interface parser'''
+    _parser = argparse.ArgumentParser(prog='emadb')
+    _parser.add_argument('--version', action='version', version='%s' % default.VERSION_STRING)
+    _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
+    _parser.add_argument('-f' , '--foreground', action='store_true', help='run in foreground (Windows only)')
+    _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
+    return _parser

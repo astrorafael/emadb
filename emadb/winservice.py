@@ -27,9 +27,10 @@ import logging
 import argparse
 import errno
 
-from logger      import logToConsole, logToFile
-from default     import VERSION, VERSION_STRING, CONFIGFILE
-from server      import Lazy
+
+import logger
+import default
+from server          import Lazy
 from emadbserver import EMADBServer
 
 import win32service
@@ -39,19 +40,13 @@ import win32con
 import win32event
 import win32evtlogutil
 
-def parser():
-    '''Create the command line interface options'''
+def cliparser():
+    '''Create the command line interface parser'''
     _parser = argparse.ArgumentParser(prog='emadb')
-    _parser.add_argument('--version', action='version', version='%s' % VERSION_STRING)
-    _parser.add_argument('-l' , '--log-file', type=str, action='store', metavar='<log file>', help='log to file')
+    _parser.add_argument('--version', action='version', version='%s' % default.VERSION_STRING)
     _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-s' , '--by-size', action='store_true', help='rotate log by size. If no set, rotate every midnight')
-
-    _parser.add_argument('-m' , '--max-size', type=int , default=1000000, help='logfile max size when rotating by size')
-
     _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
     return _parser
-
 
 class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 	"""
@@ -63,25 +58,11 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 
 	
 	def __init__(self, args):
-		
+		logger.sysLogInfo("Starting %s as a Windows service" % default.VERSION_STRING)
 		win32serviceutil.ServiceFramework.__init__(self, args)
 		Lazy.__init__(self,1)
 		self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-		servicemanager.LogInfoMsg("RAFA INICIA")
-		
-		LOGFILE = os.path.join('Documents and Settings','Rafael','emadb','my.log')
-		CONFIG_FILE = os.path.join('Documents and Settings','Rafael','emadb','config,','config.ini')
-		sys.argv.append("--log-file " + LOGFILE + "--max-size 1000000 --config-file " + CONFIG_FILE)
-	
-		opts = parser().parse_args()
-		if opts.console:
-			logToConsole()
-
-		if opts.log_file:
-			logToFile(opts.log_file, opts.by_size, opts.max_size)
-			
-		logging.getLogger().info("Starting %s" % VERSION_STRING)
-		self.server = EMADBServer(opts.config or CONFIGFILE)
+		self.server = EMADBServer(cliparser)
 		self.server.addLazy(self)
 
 		
@@ -92,14 +73,14 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 		# Check to see if self.hWaitStop happened
 		if rc == win32event.WAIT_OBJECT_0:
 			# Stop signal encountered
-			servicemanager.LogInfoMsg("%s - STOPPED" % self._svc_name_)
+			logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
 			raise IOError(errno.EINTR,"Interrupted system call from Windows")
 	
 	def SvcStop(self):
 		self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
 		win32event.SetEvent(self.hWaitStop)
 		self.logger.warn("Stopping  emadb service")
-		servicemanager.LogInfoMsg("RAFA PARA")
+		logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
 	
 	def SvcDoRun(self):
 		import servicemanager      
@@ -113,9 +94,6 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 			
 def ctrlHandler(ctrlType):
 	return True
-
-import os.path
-
+		
 win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
 win32serviceutil.HandleCommandLine(WindowsService)
-
