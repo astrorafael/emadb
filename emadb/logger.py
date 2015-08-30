@@ -32,8 +32,20 @@
 # ======================================================================
 
 import logging
+import os
+
 from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 
+if os.name == "nt":
+	import servicemanager
+	SysLogInfo = servicemanager.LogInfoMsg
+	SysLogError = servicemanager.LogErrorMsg
+else:
+	import syslog
+	SysLogInfo = syslog.syslog
+	SysLogError = syslog.syslog
+
+	
 # ----------------------
 # Adding a VERBOSE Level
 # ----------------------

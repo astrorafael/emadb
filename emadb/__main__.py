@@ -24,10 +24,16 @@
 import os
 import sys
 
+import linservice
+
 if os.name == "nt":
-   import winservice
+	import servicemanager
+	if servicemanager.RunningAsService() :
+		import winservice
+	else:
+		import linservice
 elif os.name == "posix":
-   import linservice
+	import linservice
 else:
-   print("ERROR: unsupported OS")
-   sys.exit(1)
+	print("ERROR: unsupported OS")
+	sys.exit(1)
