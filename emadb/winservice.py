@@ -87,7 +87,6 @@ class WindowsService(win32serviceutil.ServiceFramework, Lazy):
 			
 def ctrlHandler(ctrlType):
 	return True
-
-print("Executing THIS")		
+	
 win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
 win32serviceutil.HandleCommandLine(WindowsService)
