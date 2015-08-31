@@ -1,11 +1,21 @@
+* Servicio en Windows
+  Ya se como lo voy a hacer, No se usa Server.run() sino server.step() 
+  y el bucle principal lo hare en el cpodigo del servicio, incluyendo
+  el conjuro ese de procesado de eventos y dando a cada cosa un timeout/2
+  Y el server.stop() al SvcStop()
+
+  para la EMA, quizas se pieda parchear el metodo step() para hacer
+  uno a medida que icnluya el puerto serie , tal y como he hecho
+  con el verbose
+
 * INFORMES
-  - subdirectorio de queries en la instalacion
-  - ultimos 10 maximas voltages con sus unidades
-  - ultimos 10 minmas voltages con susu unidades
+  - subdirectorio de queries 'sql/'
+  - Rango de fechas disponible en RealTimeSamples
+  - ¿ Cuando estuvo el aux relay abierto ?
+    
 
 * ¿ Que pasa con el NTP ?
 
-* Servicio en Windows
 * Instalador en Windows
 * reload: alternativa para Windows ????
   - tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
@@ -14,17 +24,3 @@
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
   http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
-
-Windoes
-- python 2.7.10
-- pythonwin
-- paho mqtt via pip install
-
-$ pip install paho-mqtt
-You are using pip version 7.0.1, however version 7.1.2 is available.
-You should consider upgrading via the 'pip install --upgrade pip' command.
-Collecting paho-mqtt
-  Downloading paho-mqtt-1.1.tar.gz (41kB)
-Installing collected packages: paho-mqtt
-  Running setup.py install for paho-mqtt
-Successfully installed paho-mqtt-1.1
