@@ -37,9 +37,13 @@ import servicemanager
 
 import logger
 import default
+import cmdline
+
 from server      import Server
 from emadbserver import EMADBServer
-import cmdline
+
+
+log = logging.getLogger('winservice')
 
 class WindowsService(win32serviceutil.ServiceFramework):
     """
@@ -55,14 +59,13 @@ class WindowsService(win32serviceutil.ServiceFramework):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         self.server = EMADBServer(cmdline.parser().parse_args(args=args))
-        self.server.addLazy(self)
 
         
     def SvcStop(self):
         '''Service Stop entry point'''
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
-        self.logger.warn("Stopping  emadb service")
+        log.warn("Stopping  emadb service")
         logger.sysLogInfo("%s  - STOPPING" % self._svc_name_)
 
     
@@ -71,34 +74,9 @@ class WindowsService(win32serviceutil.ServiceFramework):
         servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
                               servicemanager.PYS_SERVICE_STARTED,
                               (self._svc_name_, '')) 
-        while True:
-            try:
-                self.step()
-            except KeyboardInterrupt:
-                log.warning("Server.run() aborted by user request")
-                break
-            except Exception as e:
-                log.exception(e)
-                break
-        server.stop()
+        self.server.run()
+        self.server.stop()
         
-    # --------------
-    # helper methods
-    # --------------
-        
-    def step(self):
-        '''Process Windows events and raises exception 
-        if STOP SERVICE event is detected'''
-        self.server.step(Server.TIMEOUT/2)
-        rc = win32event.WaitForSingleObject(self.hWaitStop, 1000*Server.TIMEOUT/2 )
-        # Wait for service stop signal for that given amount of time
-        # Check to see if self.hWaitStop happened
-        if rc == win32event.WAIT_OBJECT_0:
-            # Stop signal encountered
-            logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
-            raise IOError(errno.EINTR,"Stop Evenet received from Windows")
-    
-
             
 def ctrlHandler(ctrlType):
     return True
