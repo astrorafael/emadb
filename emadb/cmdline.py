@@ -36,7 +36,7 @@
 #
 # 4) Windows, service mode (order is important!)
 #   4.1 install the service
-#     python -m emadb install
+#     python -m emadb --startup auto install
 #   4.2 start the service
 #     python -m emadb start --config "C:\emadb\config\config.ini"
 #   4.3 stop the service
@@ -58,6 +58,7 @@ def parser():
     _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
     _parser.add_argument('-f' , '--foreground', action='store_true', help='run in foreground (Windows only)')
     _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
+    _parser.add_argument('-s' , '--startup', type=str, action='store', metavar='<auto|manual>', help='Windows service starup mode')
     group = _parser.add_mutually_exclusive_group()
     group.add_argument(' install',  type=str, nargs='?', help='install windows service')
     group.add_argument(' start',  type=str, nargs='?', help='start windows service')

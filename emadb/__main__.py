@@ -30,11 +30,11 @@ options = cmdline.parser().parse_args()
 
 if os.name == "nt":
 	if options.foreground:
-		import linservice
+		import posixservice
 	else:
 		import winservice
 elif os.name == "posix":
-	import linservice
+	import posixservice
 else:
 	print("ERROR: unsupported OS")
 	sys.exit(1)
