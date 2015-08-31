@@ -37,56 +37,72 @@ import servicemanager
 
 import logger
 import default
-from server          import Lazy
+from server      import Server
 from emadbserver import EMADBServer
 import cmdline
 
-class WindowsService(win32serviceutil.ServiceFramework, Lazy):
-	"""
-	Windows service that launches several Internet monitoring tasks in background.
-	"""
-	_svc_name_            = "emadb"
-	_svc_display_name_ = "emadb - EMA database"
-	_svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
+class WindowsService(win32serviceutil.ServiceFramework):
+    """
+    Windows service that launches several Internet monitoring tasks in background.
+    """
+    _svc_name_            = "emadb"
+    _svc_display_name_ = "emadb - EMA database"
+    _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
 
-	
-	def __init__(self, args):
-		logger.sysLogInfo("Starting %s as a Windows service" % default.VERSION_STRING)
-		win32serviceutil.ServiceFramework.__init__(self, args)
-		Lazy.__init__(self,1)
-		self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-		self.server = EMADBServer(cmdline.parser().parse_args(args=args))
-		self.server.addLazy(self)
+    
+    def __init__(self, args):
+        logger.sysLogInfo("Starting %s as a Windows service" % default.VERSION_STRING)
+        win32serviceutil.ServiceFramework.__init__(self, args)
+        self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
+        self.server = EMADBServer(cmdline.parser().parse_args(args=args))
+        self.server.addLazy(self)
 
-		
-	def work(self):
-		"""Process Windows events and raises except if STOP SERVICE event is detected"""
-		# Wait for service stop signal for that given amount of time
-		rc = win32event.WaitForSingleObject(self.hWaitStop,  1*1000 )
-		# Check to see if self.hWaitStop happened
-		if rc == win32event.WAIT_OBJECT_0:
-			# Stop signal encountered
-			logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
-			raise IOError(errno.EINTR,"Interrupted system call from Windows")
-	
-	def SvcStop(self):
-		self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-		win32event.SetEvent(self.hWaitStop)
-		self.logger.warn("Stopping  emadb service")
-		logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
-	
-	def SvcDoRun(self):
-		servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,servicemanager.PYS_SERVICE_STARTED,(self._svc_name_, '')) 
-		servicemanager.LogInfoMsg("RAFA RUN")
-		while True:
-			self.work()
-		server.run()    # Looping  until exception is caught
-		server.stop()
-		
-			
+        
+    def SvcStop(self):
+        '''Service Stop entry point'''
+        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        win32event.SetEvent(self.hWaitStop)
+        self.logger.warn("Stopping  emadb service")
+        logger.sysLogInfo("%s  - STOPPING" % self._svc_name_)
+
+    
+    def SvcDoRun(self):
+        '''Service Run entry point'''
+        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
+                              servicemanager.PYS_SERVICE_STARTED,
+                              (self._svc_name_, '')) 
+        while True:
+            try:
+                self.step()
+            except KeyboardInterrupt:
+                log.warning("Server.run() aborted by user request")
+                break
+            except Exception as e:
+                log.exception(e)
+                break
+        server.stop()
+        
+    # --------------
+    # helper methods
+    # --------------
+        
+    def step(self):
+        '''Process Windows events and raises exception 
+        if STOP SERVICE event is detected'''
+        self.server.step(Server.TIMEOUT/2)
+        rc = win32event.WaitForSingleObject(self.hWaitStop, 1000*Server.TIMEOUT/2 )
+        # Wait for service stop signal for that given amount of time
+        # Check to see if self.hWaitStop happened
+        if rc == win32event.WAIT_OBJECT_0:
+            # Stop signal encountered
+            logger.sysLogInfo("%s  - STOPPED" % self._svc_name_)
+            raise IOError(errno.EINTR,"Stop Evenet received from Windows")
+    
+
+            
 def ctrlHandler(ctrlType):
-	return True
+    return True
 
-if not servicemanager.RunningAsService():	
-	win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-	win32serviceutil.HandleCommandLine(WindowsService)
+if not servicemanager.RunningAsService():   
+    win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
+    win32serviceutil.HandleCommandLine(WindowsService)
