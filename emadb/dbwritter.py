@@ -468,7 +468,7 @@ class DBWritter(Lazy):
       log.debug("Received minmax message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
-         log.warn("Ignoring message from unregistered station %s", mqtt_id)
+         log.warn("Ignoring minmax message from unregistered station %s", mqtt_id)
          return
       rows = []
       message = payload.split('\n')
@@ -481,7 +481,6 @@ class DBWritter(Lazy):
       # It seemd there is no need to sort the dates
       # non-overlapping data do get written anyway 
       #rows = sorted(rows, key=operator.itemgetter(0,1), reverse=True)
-
       self.minmax.insert(rows)
 
 
@@ -490,7 +489,7 @@ class DBWritter(Lazy):
       t1 = datetime.datetime.utcnow()
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
-         log.warn("Ignoring message from unregistered station")
+         log.warn("Ignoring status message from unregistered station %s", mqtt_id)
          return
       message = payload.split('\n')
       date_id, time_id, t0 = xtDateTime(message[1])
