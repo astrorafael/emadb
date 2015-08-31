@@ -468,7 +468,7 @@ class DBWritter(Lazy):
       log.debug("Received minmax message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
-         log.warn("Ignoring message from unregistered station")
+         log.warn("Ignoring message from unregistered station %s", mqtt_id)
          return
       rows = []
       message = payload.split('\n')
