@@ -468,11 +468,16 @@ class DBWritter(Lazy):
       log.debug("Received minmax message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
-         log.warn("Ignoring minmax message from unregistered station %s", mqtt_id)
+         log.warn("Ignoring minmax message from unregistered station %s", 
+                  mqtt_id)
          return
       rows = []
       message = payload.split('\n')
-      for i in range(0 , len(message)/3):
+      msglen = len(message)
+      if msglen != 72:
+         log.error("Wrong minmax message from station %s", mqtt_id)
+         return
+      for i in range(0 , msglen/3):
          date_id, time_id, dummy = xtDateTime(message[3*i+2])
          r = self.minmax.row(date_id, time_id, station_id, message[3*i])
          rows.append(r)
@@ -489,9 +494,13 @@ class DBWritter(Lazy):
       t1 = datetime.datetime.utcnow()
       station_id = self.lkStation(mqtt_id)
       if station_id == 0:
-         log.warn("Ignoring status message from unregistered station %s", mqtt_id)
+         log.warn("Ignoring status message from unregistered station %s", 
+                  mqtt_id)
          return
       message = payload.split('\n')
+      if len(message) != 2:
+         log.error("Wrong status message from station %s", mqtt_id)
+         return
       date_id, time_id, t0 = xtDateTime(message[1])
       lag = int(round((t1 - t0).total_seconds()))
       log.debug( "t1 = %s, t0 = %s", t1, t0)
@@ -501,6 +510,7 @@ class DBWritter(Lazy):
       self.__rtwrites += self.realtime.insert((row,))
       if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
          log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)
+
 
    def processSamples(self, mqtt_id, payload):
       log.debug("Received samples message from station %s", mqtt_id)
