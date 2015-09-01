@@ -172,7 +172,7 @@ class Server(object):
    # main loop
    # ---------
 
-   def step1(self, timeout):
+   def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
@@ -193,39 +193,39 @@ class Server(object):
       return nreadables, nwritables, True
 
 
-   def step2( self, nreadables, nwritables, next_step_flag):
+   def processHandlers( self, nreadables, nwritables):
       '''Invoke activity handlers'''
-      if next_step_flag:
-         io_activity = False 
-         if nreadables:
-            io_activity = True
-            for readable in nreadables:
-               readable.onInput()
+      io_activity = False 
+      if nreadables:
+         io_activity = True
+         for readable in nreadables:
+            readable.onInput()
          
-         if nwritables:
-            io_activity = True
-            for writable in nwritables:
-               readable.onOutput()
+      if nwritables:
+         io_activity = True
+         for writable in nwritables:
+            readable.onOutput()
 
-         if not io_activity:                   
-            # Execute alarms first
-            for alarm in self.__alarmables:
-               if alarm.timeout():
-                  self.delAlarmable(alarm)
-                  alarm.onTimeoutDo()
+      if not io_activity:                   
+         # Execute alarms first
+         for alarm in self.__alarmables:
+            if alarm.timeout():
+               self.delAlarmable(alarm)
+               alarm.onTimeoutDo()
 
-            # Executes recurring work procedures last
-            for lazy in self.__lazy:
-               if lazy.mustWork():
-                  lazy.work()
+         # Executes recurring work procedures last
+         for lazy in self.__lazy:
+            if lazy.mustWork():
+               lazy.work()
 
 
    def step(self, timeout):
       '''
       Single step run, invoking I/O handlers or timeout handlers
       '''
-      nr, nw, flag = self.step1(timeout)
-      self.step2(nr, nw, flag)
+      nr, nw, flag = self.waitForActivity(timeout)
+      if flag:
+         self.processHandlers(nr, nw)
 
 
    def run(self):

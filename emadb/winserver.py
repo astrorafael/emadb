@@ -30,10 +30,6 @@
 # select() timeout vaule is 1 second by default,a value not to coarse
 # nor too fine.
 #
-# For EMA, this only works for *NIX like O.S. Windows doesn't handle I/O on
-# devices other than sockets when using select(), so we can't read
-# RS232 ports from here.
-#
 # I could have made this framework more generic by registering callback 
 # functions instead of object instances. Bound methods would work as 
 # well, but I have not have the need to use isolated functions.
@@ -54,7 +50,7 @@
 # We use ABCMeta metaclass and @abstractmethod decorator, to enforce
 # enforcing some methods to be implemented in subclasses.
 #
-# In v2.0, we add a SIGHUP to perform on line reloading and reconfigure
+# In v2.0, we add a reload method, TBD how to call it from Windows
 #
 # ======================================================================
 
@@ -66,10 +62,15 @@ import datetime
 import time
 from   abc import ABCMeta, abstractmethod
 
+import win32api
+import win32con
+import win32event
+
+
 log = logging.getLogger('server')
 
 
-class Server(object):
+class Server(object, stopEvent=None):
 
    TIMEOUT = 1   # seconds timeout in select()
 
@@ -80,6 +81,7 @@ class Server(object):
       self.__writables  = []
       self.__alarmables = []
       self.__lazy       = []
+      self.__hWaitStop = stopEvent if StopEvent else win32event.CreateEvent(None, 0, 0, None)
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -163,23 +165,28 @@ class Server(object):
    # main loop
    # ---------
 
-   def step1(self, timeout):
+   def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
-      # Catch SIGHUP signal suring select()
-   # and execute reload
+      # Catch "simulated signals and windows events" during this cyclo
+      # and execute reload
 
       try:
          # This is a Windows specific quirk: It returns error
          # if the select() sets are empty.
-         if self.winNT and len(self.__readables) == 0 and len(self.__writables) == 0:
-            time.sleep(timeout)
+         if len(self.__readables) == 0 and len(self.__writables) == 0:
+            rc = win32event.WaitForSingleObject(self.hWaitStop, 1000*timeout)
+            if rc == win32event.WAIT_OBJECT_0:
+               raise KeyboardInterrupt()
             nreadables = []
             nwritables = []
          else:
+            rc = win32event.WaitForSingleObject(self.hWaitStop, timeout*250)
+            if rc == win32event.WAIT_OBJECT_0:
+               raise KeyboardInterrupt()
             nreadables, nwritables, _ = select.select(
-               self.__readables, self.__writables, [], timeout)
+               self.__readables, self.__writables, [], timeout*0.75)
       except select.error as e:
          if e[0] == errno.EINTR:
             self.reload()
@@ -190,39 +197,39 @@ class Server(object):
       return nreadables, nwritables, True
 
 
-   def step2( self, nreadables, nwritables, next_step_flag):
+   def processHandlers( self, nreadables, nwritables):
       '''Invoke activity handlers'''
-      if next_step_flag:
-         io_activity = False 
-         if nreadables:
-            io_activity = True
-            for readable in nreadables:
-               readable.onInput()
-         
-         if nwritables:
-            io_activity = True
-            for writable in nwritables:
-               readable.onOutput()
+      io_activity = False 
+      if nreadables:
+         io_activity = True
+         for readable in nreadables:
+            readable.onInput()
+            
+      if nwritables:
+         io_activity = True
+         for writable in nwritables:
+            readable.onOutput()
 
-         if not io_activity:                   
-            # Execute alarms first
-            for alarm in self.__alarmables:
-               if alarm.timeout():
-                  self.delAlarmable(alarm)
-                  alarm.onTimeoutDo()
+      if not io_activity:                   
+         # Execute alarms first
+         for alarm in self.__alarmables:
+            if alarm.timeout():
+               self.delAlarmable(alarm)
+               alarm.onTimeoutDo()
 
-            # Executes recurring work procedures last
-            for lazy in self.__lazy:
-               if lazy.mustWork():
-                  lazy.work()
+         # Executes recurring work procedures last
+         for lazy in self.__lazy:
+            if lazy.mustWork():
+               lazy.work()
 
 
    def step(self, timeout):
       '''
       Single step run, invoking I/O handlers or timeout handlers
       '''
-      nr, nw, flag = self.step1(timeout)
-      self.step2(nr, nw, flag)
+      nr, nw, flag = self.waitForActivity(timeout)
+      if flag:
+         self.processHandlers(nr, nw)
 
 
    def run(self):
