@@ -81,7 +81,7 @@ class Server(object):
 
    instance = None
 
-   def __init__(self):
+   def __init__(self, *args):
       self.__readables  = []
       self.__writables  = []
       self.__alarmables = []

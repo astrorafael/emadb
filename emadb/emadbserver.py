@@ -35,8 +35,8 @@ import os
 import errno
 import sys
 
-from logger      import logToConsole, logToFile, sysLogInfo, sysLogError
-
+from logger      import logToConsole, logToFile
+from default     import VERSION_STRING
 
 # Only Python 2
 import ConfigParser
@@ -47,9 +47,9 @@ log = logging.getLogger('emadb')
 
 class EMADBServer(server.Server):
         
-    def __init__(self, options):
+    def __init__(self, options, *args):
         self.parseCmdLine(options)
-        server.Server.__init__(self)
+        server.Server.__init__(self, *args)
         self.__queue = {
             'minmax':  [] ,
             'status':  [] ,
@@ -60,9 +60,8 @@ class EMADBServer(server.Server):
         self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
         self.__parser.read(self.__cfgfile)
-        log.info("Loading configuration from %s", self.__cfgfile)
         self.parseConfigFile()
-
+        
         # DBWritter object 
         self.dbwritter = dbwritter.DBWritter(self, self.__parser)
         # MQTT Driver object 
@@ -72,7 +71,6 @@ class EMADBServer(server.Server):
     def parseCmdLine(self, opts):
         '''Parses the comand line looking for the config file path 
         and optionally console output'''
-        sysLogInfo("argv[] array is %s" % str(sys.argv)) 
         if opts.console:
             logToConsole()
         self.__cfgfile = opts.config
@@ -84,7 +82,6 @@ class EMADBServer(server.Server):
     def parseConfigFile(self):
         '''Parses the config file looking for its own options'''
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
-        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
         toFile = self.__parser.getboolean("GENERIC","log_to_file")
         if(toFile):
             filename = self.__parser.get("GENERIC","log_file")
@@ -92,6 +89,10 @@ class EMADBServer(server.Server):
             max_size = self.__parser.getint("GENERIC","log_max_size")
             by_size = policy == "size" if True else False
             logToFile(filename, by_size, max_size)
+        logging.getLogger().info("Starting %s",VERSION_STRING)
+        log.info("Loaded configuration from %s", self.__cfgfile)
+        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
+
 
     def reload(self):
         '''To be called *only* on SIGHUP or similar reload method'''

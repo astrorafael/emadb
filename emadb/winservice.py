@@ -27,47 +27,47 @@ import logging
 import argparse
 import errno
 
-import win32service
 import win32serviceutil
-import win32api
-import win32con
 import win32event
-import win32evtlogutil
 import servicemanager  
+import win32api
+
+import win32service
+import win32con
+import win32evtlogutil
+
 
 import logger
 import default
 import cmdline
 
-from server      import Server
 from emadbserver import EMADBServer
-
+from default         import VERSION_STRING
 
 log = logging.getLogger('winservice')
 
 class WindowsService(win32serviceutil.ServiceFramework):
     """
-    Windows service that launches several Internet monitoring tasks in background.
+    Windows service for the EMA database.
     """
     _svc_name_            = "emadb"
-    _svc_display_name_ = "emadb - EMA database"
+    _svc_display_name_ = "EMA database"
     _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
 
     
     def __init__(self, args):
-        logger.sysLogInfo("Starting %s as a Windows service" % default.VERSION_STRING)
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        self.server = EMADBServer(cmdline.parser().parse_args(args=args))
+        self.server = EMADBServer(cmdline.parser().parse_args(args=args), self.hWaitStop)
 
         
     def SvcStop(self):
         '''Service Stop entry point'''
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        log.info("Stopping  %s Windows service", VERSION_STRING )
+        logger.sysLogInfo("Stopping %s Windows service" % VERSION_STRING)
         win32event.SetEvent(self.hWaitStop)
-        log.warn("Stopping  emadb service")
-        logger.sysLogInfo("%s  - STOPPING" % self._svc_name_)
-
+        
     
     def SvcDoRun(self):
         '''Service Run entry point'''
@@ -76,8 +76,8 @@ class WindowsService(win32serviceutil.ServiceFramework):
                               (self._svc_name_, '')) 
         self.server.run()
         self.server.stop()
-        
-            
+        logger.sysLogInfo("%s Windows service stopped" % VERSION_STRING)
+       
 def ctrlHandler(ctrlType):
     return True
 

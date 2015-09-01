@@ -34,3 +34,4 @@ logger.sysLogInfo("Starting %s" % default.VERSION_STRING)
 server = EMADBServer(cmdline.parser().parse_args())
 server.run()    # Looping  until exception is caught
 server.stop()
+logger.sysLogInfo("Stopped %s" % default.VERSION_STRING)

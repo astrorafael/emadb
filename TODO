@@ -1,5 +1,5 @@
+*Actualizar doc de instalacion y configuracion en windows
 * Renombrar rain_probability a wet y hacer la migracion de datos con on_hold
-* Vista RTNow
 
 CONSULTAS
   - subdirectorio de queries 'sql/'
