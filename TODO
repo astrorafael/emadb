@@ -1,5 +1,4 @@
 * Renombrar rain_probability a wet y hacer la migracion de datos con on_hold
-* winserver y posixserver
 * Vista RTNow
 
 CONSULTAS
