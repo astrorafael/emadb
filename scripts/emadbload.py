@@ -30,45 +30,44 @@ import sqlite3
 import emadb.logger
 import emadb.schema
 import argparse
+# Only Python 2
+import ConfigParser
+
 
 def parser():
 	'''Create the command line interface options'''
 	_parser = argparse.ArgumentParser()
-	_parser.add_argument('-f', '--database', action='store',
-                             metavar='<database file>', 
-                             default='/var/dbase/emahistory.db', 
-                             help='path to SQLite database')
-	_parser.add_argument('-d', '--config', action='store', 
-                             metavar='<config directory>', 
-                             default='/etc/emadb', 
-                             help='path to emadb configuration directory')
-	_parser.add_argument('-t', '--date-format', 
-                             action='store', 
-                             metavar='<date format>', 
-                             default='%Y/%m/%d', 
-                             help='Date dimension format string for labels')
-	_parser.add_argument('-s', '--start-year', type=int, action='store', 
-                             metavar='<YYYY>', 
-                             default=2015, 
-                             help='Date dimension start year')
-	_parser.add_argument('-e', '--end-year', type=int, action='store', 
-                             metavar='<YYYY>', 
-                             default=2025, 
-                             help='Date dimension end year')
+	_parser.add_argument('-c', '--config-file', action='store', 
+                             metavar='<config file>', 
+                             default='/etc/emadb/config', 
+                             help='path to emadb configuration file')
 	return _parser
 
+# Parse command line options
 opt = parser().parse_args()
 emadb.logger.logToConsole()
 log = logging.getLogger('schema')
+log.info("Loaded configuration from %s", opt.config_file)
 connection = None
 
+# Reads configuration file
+config = ConfigParser.ConfigParser()
+config.optionxform = str
+config.read(opt.config_file)
+
+dbfile      = config.get("DBASE", "dbase_file")
+json_dir    = config.get("DBASE", "dbase_json_dir")
+date_fmt    = config.get("DBASE", "dbase_date_fmt")
+year_start  = config.getint("DBASE", "dbase_year_start")
+year_end    = config.getint("DBASE", "dbase_year_end")
+
 try:
-    connection = sqlite3.connect(opt.database)
+    connection = sqlite3.connect(dbfile)
     emadb.schema.generate(connection, 
-                          opt.config, 
-                          opt.date_fmt,
-                          opt.start_year, 
-                          opt.end_year, 
+                          json_dir, 
+                          date_fmt,
+                          year_start, 
+                          year_end,
                           replace=True)
 
 except sqlite3.Error as e:

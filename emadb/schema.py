@@ -559,8 +559,9 @@ class RealTimeSamples(object):
         )
 
 
-def generate(connection, json_dir, date_fmt, year_start, year_end,
+def generate(connection, json_dir, date_fmt, year_start, year_end, 
              replace=False):
+
     '''Schema Generation. The main function'''
     Date(connection, date_fmt, year_start, year_end).generate(replace)
     TimeOfDay(connection).generate(replace)
