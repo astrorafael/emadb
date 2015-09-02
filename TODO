@@ -9,10 +9,9 @@ CONSULTAS
 * ¿ Que pasa con el NTP ?
 
 * Instalador en Windows
-* reload: alternativa para Windows ????
 * tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
    esos datos desde la EMA
-
+* formula de la magnitud visual a partir de los Hz
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
   http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
