@@ -76,7 +76,8 @@ class EMADBServer(server.Server):
         self.__cfgfile = opts.config
         if not (self.__cfgfile != None and os.path.exists(self.__cfgfile)):
             log.error("No configuration file found: %s", self.__cfgfile)
-            raise IOError(errno.ENOENT,"No such file or directory",self.__cfgfile)
+            raise IOError(errno.ENOENT,"No such file or directory: %s",
+                          self.__cfgfile)
 
 
     def parseConfigFile(self):
