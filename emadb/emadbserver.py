@@ -47,9 +47,9 @@ log = logging.getLogger('emadb')
 
 class EMADBServer(server.Server):
         
-    def __init__(self, options, *args):
+    def __init__(self, options, **kargs):
         self.parseCmdLine(options)
-        server.Server.__init__(self, *args)
+        server.Server.__init__(self, **kargs)
         self.__queue = {
             'minmax':  [] ,
             'status':  [] ,

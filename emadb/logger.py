@@ -67,7 +67,11 @@ logging.Logger.verbose = verbose
 # ------------
 
 CONSOLE_FORMAT = '[%(levelname)7s] %(name)9s - %(message)s'
+
 FILE_FORMAT    = '%(asctime)s [%(levelname)7s] - %(name)9s %(message)s'
+
+# This one is for multithreading debugging
+#FILE_FORMAT    = '%(asctime)s [%(levelname)7s] [%(thread)d] - %(name)9s %(message)s'
 
 ROOT = logging.getLogger()
 ROOT.setLevel(logging.INFO)

@@ -77,15 +77,13 @@ class Server(object):
 
    instance = None
 
-   def __init__(self, *args):
+   def __init__(self, **kargs):
       self.__readables  = []
       self.__writables  = []
       self.__alarmables = []
       self.__lazy       = []
-      if len(args):
-          self.__hWaitStop = args[0]
-      else:
-          self.__hWaitStop = win32event.CreateEvent(None, 0, 0, None)
+      self.__hWaitStop = kargs.get("stopEvt",win32event.CreateEvent(None, 0, 0, None))
+      self.__hWaitRld  = kargs.get("rldEvt",win32event.CreateEvent(None, 0, 0, None))
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -173,6 +171,7 @@ class Server(object):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
+      events  = (self.__hWaitStop, self.__hWaitRld)
       # Catch "simulated signals and windows events" during this cyclo
       # and execute reload
 
@@ -180,15 +179,23 @@ class Server(object):
          # This is a Windows specific quirk: It returns error
          # if the select() sets are empty.
          if len(self.__readables) == 0 and len(self.__writables) == 0:
-            rc = win32event.WaitForSingleObject(self.__hWaitStop, 1000*timeout)
+            rc = win32event.WaitForMultipleObjects(events, False, 1000*timeout)
             if rc == win32event.WAIT_OBJECT_0:
                raise KeyboardInterrupt()
+            elif rc == win32event.WAIT_OBJECT_0+1:
+               self.reload()
+               return [], [], False
+ 
             nreadables = []
             nwritables = []
          else:
-            rc = win32event.WaitForSingleObject(self.__hWaitStop, timeout*250)
+            rc = win32event.WaitForMultipleObjects(events, False, timeout*250)
             if rc == win32event.WAIT_OBJECT_0:
                raise KeyboardInterrupt()
+            elif rc == win32event.WAIT_OBJECT_0+1:
+               self.reload()
+               return [], [], False
+                
             nreadables, nwritables, _ = select.select(
                self.__readables, self.__writables, [], timeout*0.75)
       except select.error as e:

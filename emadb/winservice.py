@@ -60,8 +60,9 @@ class EMAWindowsService(win32serviceutil.ServiceFramework):
     
     def __init__(self, args):
         win32serviceutil.ServiceFramework.__init__(self, args)
-        self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        self.server = EMADBServer(cmdline.parser().parse_args(args=args), self.hWaitStop)
+        self.hWaitStop   = win32event.CreateEvent(None, 0, 0, None)
+        self.hWaitReload = win32event.CreateEvent(None, 0, 0, None)
+        self.server = EMADBServer(cmdline.parser().parse_args(args=args), stopEvt=self.hWaitStop, rldEvt=self.hWaitReload)
 
         
     def SvcStop(self):
@@ -89,7 +90,8 @@ class EMAWindowsService(win32serviceutil.ServiceFramework):
             
     def SvcDoReload(self):
         logger.sysLogInfo("reloading emadb service")
-        self.server.reload()
+        win32event.SetEvent(self.hWaitReload)
+
        
 def ctrlHandler(ctrlType):
     return True
