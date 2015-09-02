@@ -34,10 +34,27 @@ import argparse
 def parser():
 	'''Create the command line interface options'''
 	_parser = argparse.ArgumentParser()
-	_parser.add_argument('-f', '--database', action='store', metavar='<database file>', default='/var/dbase/emahistory.db', help='path to SQLite database')
-	_parser.add_argument('-d', '--config', action='store', metavar='<config directory>', default='/etc/emadb', help='path to emadb configuration directory')
-	_parser.add_argument('-s', '--start-year', type=int, action='store', metavar='<YYYY>', default=2015, help='Date dimension start year')
-	_parser.add_argument('-e', '--end-year', type=int, action='store', metavar='<YYYY>', default=2025, help='Date dimension end year')
+	_parser.add_argument('-f', '--database', action='store',
+                             metavar='<database file>', 
+                             default='/var/dbase/emahistory.db', 
+                             help='path to SQLite database')
+	_parser.add_argument('-d', '--config', action='store', 
+                             metavar='<config directory>', 
+                             default='/etc/emadb', 
+                             help='path to emadb configuration directory')
+	_parser.add_argument('-t', '--date-format', 
+                             action='store', 
+                             metavar='<date format>', 
+                             default='%Y/%m/%d', 
+                             help='Date dimension format string for labels')
+	_parser.add_argument('-s', '--start-year', type=int, action='store', 
+                             metavar='<YYYY>', 
+                             default=2015, 
+                             help='Date dimension start year')
+	_parser.add_argument('-e', '--end-year', type=int, action='store', 
+                             metavar='<YYYY>', 
+                             default=2025, 
+                             help='Date dimension end year')
 	return _parser
 
 opt = parser().parse_args()
@@ -49,6 +66,7 @@ try:
     connection = sqlite3.connect(opt.database)
     emadb.schema.generate(connection, 
                           opt.config, 
+                          opt.date_fmt,
                           opt.start_year, 
                           opt.end_year, 
                           replace=True)

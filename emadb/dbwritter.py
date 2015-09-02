@@ -423,6 +423,7 @@ class DBWritter(Lazy):
       dbfile      = parser.get("DBASE", "dbase_file")
       json_dir    = parser.get("DBASE", "dbase_json_dir")
       period      = parser.getint("DBASE", "dbase_period")
+      date_fmt    = parser.get("DBASE", "dbase_date_fmt")
       year_start  = parser.getint("DBASE", "dbase_year_start")
       year_end    = parser.getint("DBASE", "dbase_year_end")
       purge_flag  = parser.getboolean("DBASE", "dbase_purge")
@@ -439,6 +440,7 @@ class DBWritter(Lazy):
          self.__file    = dbfile
          schema.generate(self.__conn,
                          json_dir,
+                         date_fmt,
                          year_start,
                          year_end,
                          replace=False)

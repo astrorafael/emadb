@@ -75,10 +75,11 @@ class Date(object):
 
     ONE         = datetime.timedelta(days=1)
 
-    def __init__(self, conn, year_start, year_end):
+    def __init__(self, conn, date_fmt, year_start, year_end):
         '''Create and Populate the SQLite Date Table'''
         self.__cursor  = conn.cursor()
         self.__conn  = conn
+        self.__fmt   = date_fmt
         self.__start = datetime.date(year_start,1,1)
         self.__end   = datetime.date(year_end,12,31)
 
@@ -135,7 +136,7 @@ class Date(object):
         return (
             date.year*10000+date.month*100+date.day, # Key
             str(date),            # SQLite date string
-            date.strftime("%x"),  # localized date string
+            date.strftime(self.__fmt),  # date string
             date.day,             # day of month
             date.strftime("%j"),  # day of year
             julian_day(date)+0.5,     # At midnight (+ or - ?????)
@@ -558,9 +559,10 @@ class RealTimeSamples(object):
         )
 
 
-def generate(connection, json_dir, year_start, year_end, replace=False):
+def generate(connection, json_dir, date_fmt, year_start, year_end,
+             replace=False):
     '''Schema Generation. The main function'''
-    Date(connection, year_start, year_end).generate(replace)
+    Date(connection, date_fmt, year_start, year_end).generate(replace)
     TimeOfDay(connection).generate(replace)
     Station(connection,json_dir).generate(replace)
     MeasurementType(connection).generate(replace)
