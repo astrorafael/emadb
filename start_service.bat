@@ -1,1 +1,1 @@
-python -m emadb start --config "C:\Documents and Settings\Rafael\emadb\config\config.ini"
+python -m emadb start --config "C:\emadb\config\config.ini"
