@@ -62,10 +62,11 @@ import datetime
 import time
 from   abc import ABCMeta, abstractmethod
 
+import logger
+
 import win32api
 import win32con
 import win32event
-
 
 log = logging.getLogger('server')
 
@@ -246,6 +247,7 @@ class Server(object):
             log.warning("Server.run() aborted by user request")
             break
          except Exception as e:
+            logger.sysLogError(str(e))
             log.exception(e)
             break
          
