@@ -432,10 +432,14 @@ class DBWritter(Lazy):
       self.period = period
       self.setPeriod(60*period)
       try:
-         if self.__file != dbfile and self.__conn is not None:
+         if self.__conn is not None and self.__file != dbfile:
             self.__conn.close()
-         log.debug("opening database %s", dbfile)
-         self.__conn    = sqlite3.connect(dbfile)
+            self.__conn = None
+         if self.__conn is None:
+            log.debug("opening database %s", dbfile)
+            self.__conn    = sqlite3.connect(dbfile)
+         else:
+            log.debug("reusing database connection to %s", dbfile)
          self.__cursor  = self.__conn.cursor()
          self.__file    = dbfile
          schema.generate(self.__conn,
