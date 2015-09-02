@@ -46,7 +46,10 @@ from default         import VERSION_STRING
 
 log = logging.getLogger('winservice')
 
-class WindowsService(win32serviceutil.ServiceFramework):
+# Custom Widnows service control in the range of [128-255]
+SERVICE_CONTROL_RELOAD = 128
+
+class EMAWindowsService(win32serviceutil.ServiceFramework):
     """
     Windows service for the EMA database.
     """
@@ -71,16 +74,26 @@ class WindowsService(win32serviceutil.ServiceFramework):
     
     def SvcDoRun(self):
         '''Service Run entry point'''
-        servicemanager.LogMsg(servicemanager.EVENTLOG_INFORMATION_TYPE,
-                              servicemanager.PYS_SERVICE_STARTED,
-                              (self._svc_name_, '')) 
+        logger.sysLogInfo("Starting %s Windows service" % VERSION_STRING)
         self.server.run()
         self.server.stop()
         logger.sysLogInfo("%s Windows service stopped" % VERSION_STRING)
+
+
+    def SvcOtherEx(self, control, event_type, data):
+        '''Implements a Reload functionality as a  service custom control'''
+        if control == SERVICE_CONTROL_RELOAD:
+            self.SvcDoReload()
+        else:
+            self.SvcOther(control)
+            
+    def SvcDoReload(self):
+        logger.sysLogInfo("reloading emadb service")
+        self.server.reload()
        
 def ctrlHandler(ctrlType):
     return True
 
 if not servicemanager.RunningAsService():   
     win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-    win32serviceutil.HandleCommandLine(WindowsService)
+    win32serviceutil.HandleCommandLine(EMAWindowsService)
