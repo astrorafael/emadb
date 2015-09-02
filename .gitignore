@@ -8,3 +8,5 @@ myconfig
 myemadb.sh
 *.db
 *~
+dbase
+log
