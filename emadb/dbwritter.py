@@ -111,7 +111,7 @@ def xtVoltage(message):
    '''Extract and transform Voltage'''
    return float(message[SPSB:SPSE]) / 10
 
-def xtRainProbability(message):
+def xtWetLevel(message):
    '''Extract and transform Rain Probability'''
    return float(message[SRAB:SRAE]) / 10
 
@@ -127,7 +127,7 @@ def xtAbsPressure(message):
    '''Extract and transform Absolute Pressure'''
    return  float(message[SABB:SABE]) / 10
 
-def xtRainLevel(message):
+def xtRain(message):
    '''Extract and transform Rain Level'''
    return float(message[SPCB:SPCE]) / 10
 
@@ -135,7 +135,7 @@ def xtIrradiation(message):
    '''Extract and transform Solar Irradiantion Level'''
    return float(message[SPYB:SPYE]) / 10
 
-def xtMagInstrument(message):
+def xtFrequency(message):
    '''Extract and Transform into Instrumental Magnitude in Hz'''
    exp  = int(message[SPHB]) - 3      
    mant = int(message[SPHB+1:SPHE])
@@ -143,7 +143,7 @@ def xtMagInstrument(message):
 
 def xtMagVisual(message):
    '''Extract and Transform into Visual maginitued per arcsec 2'''
-   instrmag = xtMagInstrument(message)
+   instrmag = xtFrequency(message)
    # We need the formulae to compute visual magnitude from Hz
    # For the time being, we return Hz.
    return 0.0
@@ -214,10 +214,10 @@ class MinMaxHistory(object):
       log.debug("MinMaxHistory: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
-         log.warn("MinMaxHistory: overlapping rows")  
+         log.debug("MinMaxHistory: overlapping rows")  
       except sqlite3.OperationalError, e:
          self.__conn.rollback()
          if e.args[0] != DATABASE_LOCKED:
@@ -235,11 +235,11 @@ class MinMaxHistory(object):
       rowcount = self.rowcount()
       commited = rowcount -  self.__rowcount
       self.__rowcount = rowcount
-      log.debug("MinMaxHistory: commited rows (%d/%d)", commited, len(rows))
+      log.info("MinMaxHistory: commited rows (%d/%d)", commited, len(rows))
       return  commited
 
 
-   def row(self, date_id, time_id, station_id, message):
+   def row(self, date_id, time_id, station_id, tstamp,  message):
       '''Produces one minmax row to be inserted into the database'''
 
       # Get values from cache
@@ -251,21 +251,22 @@ class MinMaxHistory(object):
          time_id,               # time_id
          station_id,            # station_id
          type_id,               # type_id
-         units_id,                            # units_id
-         xtVoltage(message),                  # voltage
-         xtRainProbability(message),          # rain_probability
-         xtCloudLevel(message),               # clouds_level
-         xtCalPressure(message),              # cal_pressure
-         xtAbsPressure(message),              # abs_pressure
-         xtRainLevel(message),                # rain_level
-         xtIrradiation(message),              # irradiation
-         xtMagVisual(message),                # visual_magnitude
-         xtMagInstrument(message),            # instrumental_magnitude
-         xtTemperature(message),              # temperature
-         xtHumidity(message),                 # humidity
-         xtDewPoint(message),                 # dew_point
-         xtWindSpeed(message),                # wind_speed
-         xtWindDirection(message),            # wind_direction
+         units_id,              # units_id
+         xtVoltage(message),    # voltage
+         xtWetLevel(message),   # wet
+         xtCloudLevel(message), # cloudy
+         xtCalPressure(message),   # cal_pressure
+         xtAbsPressure(message),   # abs_pressure
+         xtRain(message),          # rain
+         xtIrradiation(message),   # irradiation
+         xtMagVisual(message),     # visual_magnitude
+         xtFrequency(message),     # frequency
+         xtTemperature(message),   # temperature
+         xtHumidity(message),      # humidity
+         xtDewPoint(message),      # dew_point
+         xtWindSpeed(message),     # wind_speed
+         xtWindDirection(message), # wind_direction
+         tstamp,                   # timestamp
          )
 
 
@@ -305,7 +306,7 @@ class RealTimeSamples(object):
       log.debug("RealTimeSamples: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.warn("RealTimeSamples: overlapping rows")
@@ -330,7 +331,7 @@ class RealTimeSamples(object):
       return  commited
 
 
-   def row(self, date_id, time_id, station_id, lag, message):
+   def row(self, date_id, time_id, station_id, tstamp, lag, message):
       '''Produces one real time row to be inserted into the database'''
 
       # get units from cache
@@ -341,21 +342,22 @@ class RealTimeSamples(object):
          time_id,               # time_id
          station_id,            # station_id
          units_id,              # units_id
-         xtVoltage(message),                  # voltage
-         xtRainProbability(message),          # rain_probability
-         xtCloudLevel(message),               # clouds_level
-         xtCalPressure(message),              # cal_pressure
-         xtAbsPressure(message),              # abs_pressure
-         xtRainLevel(message),                # rain_level
-         xtIrradiation(message),              # irradiation
-         xtMagVisual(message),                # visual_magnitude
-         xtMagInstrument(message),            # instrumental_magnitude
-         xtTemperature(message),              # temperature
-         xtHumidity(message),                 # humidity
-         xtDewPoint(message),                 # dew_point
-         xtWindSpeed(message),                # wind_speed
-         xtWindDirection(message),            # wind_direction
-         lag,                                 # lag
+         xtVoltage(message),    # voltage
+         xtWetLevel(message),   # wet
+         xtCloudLevel(message), # cloudy
+         xtCalPressure(message),   # cal_pressure
+         xtAbsPressure(message),   # abs_pressure
+         xtRain(message),          # rain
+         xtIrradiation(message),   # irradiation
+         xtMagVisual(message),     # visual_magnitude
+         xtFrequency(message),     # frequency
+         xtTemperature(message),   # temperature
+         xtHumidity(message),      # humidity
+         xtDewPoint(message),      # dew_point
+         xtWindSpeed(message),     # wind_speed
+         xtWindDirection(message), # wind_direction
+         tstamp,                   # timestamp
+         lag,                      # lag
       )
 
 
@@ -484,10 +486,11 @@ class DBWritter(Lazy):
          log.error("Wrong minmax message from station %s", mqtt_id)
          return
       for i in range(0 , msglen/3):
-         date_id, time_id, dummy = xtDateTime(message[3*i+2])
-         r = self.minmax.row(date_id, time_id, station_id, message[3*i])
+         date_id, time_id, t0 = xtDateTime(message[3*i+2])
+         tsmp = t0.strftime("%Y-%m-%d %H:%M:%S")
+         r = self.minmax.row(date_id, time_id, station_id, tsmp, message[3*i])
          rows.append(r)
-         r = self.minmax.row(date_id, time_id, station_id, message[3*i+1])
+         r = self.minmax.row(date_id, time_id, station_id, tsmp, message[3*i+1])
          rows.append(r)
       # It seemd there is no need to sort the dates
       # non-overlapping data do get written anyway 
@@ -509,10 +512,12 @@ class DBWritter(Lazy):
          return
       date_id, time_id, t0 = xtDateTime(message[1])
       lag = int(round((t1 - t0).total_seconds()))
+      tstamp = t0.strftime("%Y-%m-%d %H:%M:%S")
       log.debug( "t1 = %s, t0 = %s", t1, t0)
       log.debug("Received status message from station %s (lag = %d)",
                 mqtt_id, lag)
-      row = self.realtime.row(date_id, time_id, station_id, lag, message[0])
+      row = self.realtime.row(date_id, time_id, station_id, tstamp, lag, 
+                              message[0])
       self.__rtwrites += self.realtime.insert((row,))
       if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
          log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)

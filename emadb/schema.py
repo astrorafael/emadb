@@ -504,6 +504,7 @@ class MinMaxHistory(object):
             dew_point          REAL,
             wind_speed         REAL,
             wind_direction     INTEGER,
+            timestamp          TEXT,
             PRIMARY KEY (date_id, time_id, station_id, type_id)
             );
             """
@@ -552,6 +553,7 @@ class RealTimeSamples(object):
             dew_point          REAL,
             wind_speed         REAL,
             wind_direction     INTEGER,
+            timestamp          TEXT,
             lag                INTEGER,
             PRIMARY KEY (date_id, time_id, station_id)
             );
