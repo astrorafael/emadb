@@ -35,7 +35,7 @@ import os
 import errno
 import sys
 
-from server      import logToConsole, logToFile
+from server      import Server, logToFile, logToConsole
 from default     import VERSION_STRING
 
 # Only Python 2
@@ -45,7 +45,7 @@ import ConfigParser
 log = logging.getLogger('emadb')
 
 
-class EMADBServer(server.Server):
+class EMADBServer(Server):
         
     def __init__(self, options, **kargs):
         self.parseCmdLine(options)
@@ -90,6 +90,7 @@ class EMADBServer(server.Server):
             max_size = self.__parser.getint("GENERIC","log_max_size")
             by_size = policy == "size" if True else False
             logToFile(filename, by_size, max_size)
+
         logging.getLogger().info("Starting %s, %s",
                                  VERSION_STRING, self.FLAVOUR)
         log.info("Loaded configuration from %s", self.__cfgfile)
@@ -174,10 +175,5 @@ class EMADBServer(server.Server):
         log.info("Shutting down EMA server")
         logging.shutdown()
 
-if __name__ == "__main__":
-    import logger
-    logger.logToConsole()
-    server = EMADBServer('../config')
-    server.run()
-    server.stop()
+
 

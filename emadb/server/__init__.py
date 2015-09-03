@@ -24,14 +24,15 @@
 import os
 import sys
 
+from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
 from alarmable import Alarmable, Alarmable2
 from lazy      import Lazy
 from misc      import TIMEOUT
-from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
+
 
 
 if os.name == "nt":
-    import winbgserver
+    from  winbgserver import Server
 elif os.name == "posix":
     from  posixserver import Server
 else:

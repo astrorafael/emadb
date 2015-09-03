@@ -44,11 +44,8 @@
 #   4.4 remove the service
 #     python -m emadb remove
 
-import sys
-import logging
-import argparse
-from server import logger
 
+import argparse
 import default
 
 def parser():

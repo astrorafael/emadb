@@ -2,10 +2,10 @@ from setuptools import setup, Extension
 
 classifiers = ['Development Status :: 3 - Alpha',
                'Operating System :: POSIX :: Linux',
+               'Operating System :: Windows',
                'License :: OSI Approved :: MIT License',
                'Intended Audience :: Developers',
                'Programming Language :: Python :: 2.7',
-               'Operating System :: POSIX',
                'Topic :: Astronomy',
                'Topic :: Meteorology',
                'Topic :: Raspberry Pi',
@@ -22,5 +22,5 @@ setup(name             = 'EMADB',
       keywords         = 'EMA Database Meteorology Astronomy Python RaspberryPi',
       url              = 'http://github.com/astrorafael/emadb/',
       classifiers      = classifiers,
-      packages         = ["emadb",],
+      packages         = ["emadb","emadb.server"],
       )

@@ -61,9 +61,8 @@ import errno
 import signal
 import select
 import logging
-import time
-import logger
 
+import logger
 import misc
 
 log = logging.getLogger('server')

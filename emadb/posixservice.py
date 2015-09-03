@@ -27,9 +27,11 @@ import argparse
 
 import default
 import cmdline
-from emadbserver import EMADBServer
+
 from server import logger
+from emadbserver import EMADBServer
 	
+
 logger.sysLogInfo("Starting %s" % default.VERSION_STRING)
 srv = EMADBServer(cmdline.parser().parse_args())
 srv.run()    # Looping  until exception is caught
