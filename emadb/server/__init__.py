@@ -31,7 +31,7 @@ from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
 
 
 if os.name == "nt":
-    from  winserver   import Server
+    from  winbgserver import Server
 elif os.name == "posix":
     from  posixserver import Server
 else:

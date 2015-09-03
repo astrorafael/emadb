@@ -30,15 +30,13 @@
 # select() timeout vaule is 1 second by default,a value not to coarse
 # nor too fine.
 #
-# For EMA, this only works for *NIX like O.S. Windows doesn't handle I/O on
-# devices other than sockets when using select(), so we can't read
-# RS232 ports from here.
-#
 # I could have made this framework more generic by registering callback 
 # functions instead of object instances. Bound methods would work as 
 # well, but I have not have the need to use isolated functions.
 #
-
+# The Lazy class is meant to be subclassed and contains all the logic
+# to handle a cyclic counter. When this counter reaches 0 it triggers
+# a callback.
 #
 # The Alarmable class is meant to be subclassed and contains all the 
 # logic to handle a counter and triigering a callback when the counter 
@@ -52,42 +50,35 @@
 # We use ABCMeta metaclass and @abstractmethod decorator, to enforce
 # enforcing some methods to be implemented in subclasses.
 #
-# In v2.0, we add a SIGHUP to perform on line reloading and reconfigure
+# In v2.0, we add a reload method, TBD how to call it from Windows
 #
 # ======================================================================
 
 import os
 import errno
-import signal
 import select
 import logging
+import datetime
 import time
-import logger
 
-import misc
+
+import logger
 
 log = logging.getLogger('server')
 
-def sighandler(signum, frame):
-   '''
-   Signal handler (SIGALARM only)
-   '''
-   Server.instance.sigflag = True
 
 class Server(object):
 
-   FLAVOUR = "POSIX server"
+   FAVOUR = "Windows Console" 
 
    instance = None
 
-   def __init__(self, *args):
+   def __init__(self, **kargs):
       self.__readables  = []
       self.__writables  = []
       self.__alarmables = []
       self.__lazy       = []
-      self.sigflag      = True
-      Server.instance   = self
-      signal.signal(signal.SIGHUP, sighandler)
+
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -174,17 +165,18 @@ class Server(object):
    def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
-
-      # Catch SIGHUP signal suring select()
-      # and execute reload
-
       try:
-         nreadables, nwritables, _ = select.select(
-            self.__readables, self.__writables, [], timeout)
+         # This is a Windows specific quirk: It returns error
+         # if the select() sets are empty.
+         if len(self.__readables) == 0 and len(self.__writables) == 0:
+            time.sleep(timeout)
+            return [], [], False
+         else:
+            nreadables, nwritables, _ = select.select(
+               self.__readables, self.__writables, [], timeout*0.75)
       except select.error as e:
-         if e[0] == errno.EINTR and self.sigflag:
+         if e[0] == errno.EINTR:
             self.reload()
-            self.sigflag = False
             return [], [], False
          raise
       except Exception:
@@ -199,7 +191,7 @@ class Server(object):
          io_activity = True
          for readable in nreadables:
             readable.onInput()
-         
+            
       if nwritables:
          io_activity = True
          for writable in nwritables:
@@ -233,7 +225,7 @@ class Server(object):
       '''
       while True:
          try:
-            self.step(misc.TIMEOUT)
+            self.step(Server.TIMEOUT)
          except KeyboardInterrupt:
             log.warning("Server.run() aborted by user request")
             break
@@ -249,6 +241,3 @@ class Server(object):
       To be subclassed if needed
       '''
       pass
-
-
-

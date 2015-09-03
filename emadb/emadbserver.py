@@ -90,7 +90,8 @@ class EMADBServer(server.Server):
             max_size = self.__parser.getint("GENERIC","log_max_size")
             by_size = policy == "size" if True else False
             logToFile(filename, by_size, max_size)
-        logging.getLogger().info("Starting %s",VERSION_STRING)
+        logging.getLogger().info("Starting %s, %s",
+                                 VERSION_STRING, self.FLAVOUR)
         log.info("Loaded configuration from %s", self.__cfgfile)
         self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
 

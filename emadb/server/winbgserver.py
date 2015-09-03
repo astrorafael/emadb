@@ -60,20 +60,20 @@ import select
 import logging
 import datetime
 import time
-from   abc import ABCMeta, abstractmethod
-
-import logger
 
 import win32api
 import win32con
 import win32event
+
+import logger
+import misc
 
 log = logging.getLogger('server')
 
 
 class Server(object):
 
-   TIMEOUT = 1   # seconds timeout in select()
+   FLAVOUR = "Windows Service"
 
    instance = None
 
@@ -87,7 +87,7 @@ class Server(object):
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
-      Server.TIMEOUT = newT
+      misc.TIMEOUT = newT
 
    def addReadable(self, obj):
       '''
@@ -172,7 +172,7 @@ class Server(object):
       a next step flag (True = next step is needed)'''
 
       events  = (self.__hWaitStop, self.__hWaitRld)
-      # Catch "simulated signals and windows events" during this cyclo
+      # Catch "windows events" during this cyclo
       # and execute reload
 
       try:
@@ -185,9 +185,6 @@ class Server(object):
             elif rc == win32event.WAIT_OBJECT_0+1:
                self.reload()
                return [], [], False
- 
-            nreadables = []
-            nwritables = []
          else:
             rc = win32event.WaitForMultipleObjects(events, False, timeout*250)
             if rc == win32event.WAIT_OBJECT_0:
@@ -199,9 +196,6 @@ class Server(object):
             nreadables, nwritables, _ = select.select(
                self.__readables, self.__writables, [], timeout*0.75)
       except select.error as e:
-         if e[0] == errno.EINTR:
-            self.reload()
-            return [], [], False
          raise
       except Exception:
          raise
@@ -266,126 +260,3 @@ class Server(object):
       '''
       pass
 
-
-# ==========================================================
-
-class Lazy(object):
-   '''
-   Abstract class for all objects implementing a work() method
-   to be used within the select() system call 
-   when this system call times out.
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, period=1.0):
-      self.__count = 0
-      self.__limit = int(round(period/Server.TIMEOUT))
-
-
-   def reset(self):
-      self.__count = 0
-
-
-   def setPeriod(self, period):
-      self.__limit = int(round(period/Server.TIMEOUT))
-
-
-   def mustWork(self):
-      '''
-      Increments counter modulo N.
-      Returns True if counter wraps around.
-      '''
-      self.__count = (self.__count + 1) % self.__limit
-      return  (self.__count == 0)
-
-   @abstractmethod
-   def work(self):
-      '''
-      Work procedure for lazy objects.
-      To be subclassed and overriden
-      '''
-      pass
-
-# ==========================================================
-
-class Alarmable(object):
-   '''
-   Superclass for all objects implementing a OnTimeoutDo() method
-   to be used within the select() system call when this system call times out.
-   Efficient but not accurate implememtation valid for a few seconds 
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, timeout=1.0):
-      self.__count = 0
-      self.__limit = int(round(timeout/Server.TIMEOUT))
-
-
-   def resetAlarm(self):
-      self.__count = 0
-
-
-   def setTimeout(self, timeout):
-      self.__limit = int(round(timeout/Server.TIMEOUT))
-
-
-   def timeout(self):
-      '''
-      Increments counter modulo N.
-      Returns True if counter wraps around.
-      '''
-      self.__count = (self.__count + 1) % self.__limit
-      return  (self.__count == 0)
-
-
-   @abstractmethod
-   def onTimeoutDo(self):
-      '''
-      To be subclassed and overriden
-      '''
-      pass
-
-# ==========================================================
-
-class Alarmable2(object):
-   '''
-   Abstract class for all objects implementing a OnTimeoutDo() method
-   to be used within the select() system call when this system call times out.
-   Accurate implememtation valid for sevtral hours using timestamps. 
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, timeout=1):
-      self.__delta   = datetime.timedelta(seconds=timeout)
-      self.__tsFinal = datetime.datetime.utcnow() + self.__delta
-
-   def resetAlarm(self):
-      self.__tsFinal    = datetime.datetime.utcnow() + self.__delta
-
-   def setTimeout(self, timeout):
-      self.__delta = datetime.timedelta(seconds=timeout)
-
-
-   def timeout(self):
-      '''
-      Returns True if timeout elapsed.
-      '''
-      return datetime.datetime.utcnow() >= self.__tsFinal   
-
-
-   @abstractmethod
-   def onTimeoutDo(self):
-      '''
-      To be subclassed and overriden
-      '''
-      pass
-
-
-if __name__ == "__main__":
-   utils.setDebug()
-   server = Server()
-   server.run()
-   server.stop()
