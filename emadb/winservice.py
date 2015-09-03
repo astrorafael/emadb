@@ -37,24 +37,24 @@ import win32con
 import win32evtlogutil
 
 
-import logger
 import default
 import cmdline
 
+from server      import logger
 from emadbserver import EMADBServer
-from default         import VERSION_STRING
+from default     import VERSION_STRING
 
 log = logging.getLogger('winservice')
 
 # Custom Widnows service control in the range of [128-255]
 SERVICE_CONTROL_RELOAD = 128
 
-class EMAWindowsService(win32serviceutil.ServiceFramework):
+class WindowsService(win32serviceutil.ServiceFramework):
     """
     Windows service for the EMA database.
     """
     _svc_name_            = "emadb"
-    _svc_display_name_ = "EMA database"
+    _svc_display_name_    = "EMA database"
     _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
 
     
@@ -98,4 +98,4 @@ def ctrlHandler(ctrlType):
 
 if not servicemanager.RunningAsService():   
     win32api.SetConsoleCtrlHandler(ctrlHandler, True)   
-    win32serviceutil.HandleCommandLine(EMAWindowsService)
+    win32serviceutil.HandleCommandLine(WindowsService)

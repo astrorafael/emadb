@@ -25,14 +25,13 @@ import sys
 import logging
 import argparse
 
-from server import logger
-
 import default
-from emadbserver import EMADBServer
 import cmdline
+from emadbserver import EMADBServer
+from server import logger
 	
 logger.sysLogInfo("Starting %s" % default.VERSION_STRING)
-server = EMADBServer(cmdline.parser().parse_args())
-server.run()    # Looping  until exception is caught
-server.stop()
+srv = EMADBServer(cmdline.parser().parse_args())
+srv.run()    # Looping  until exception is caught
+srv.stop()
 logger.sysLogInfo("Stopped %s" % default.VERSION_STRING)
