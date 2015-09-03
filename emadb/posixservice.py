@@ -24,7 +24,8 @@
 import sys
 import logging
 import argparse
-import logger
+
+from server import logger
 
 import default
 from emadbserver import EMADBServer

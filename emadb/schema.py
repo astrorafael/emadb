@@ -574,7 +574,7 @@ def generate(connection, json_dir, date_fmt, year_start, year_end,
     RealTimeSamples(connection).generate()
 
 if __name__ == "__main__":
-    import logger
+    from server import logger
 
     logger.logToConsole()
     if not os.path.exists(sys.argv[1]):

@@ -36,16 +36,24 @@ import os
 
 from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 
-sysLogInfo = None
+sysLogInfo  = None
 sysLogError = None
 
 if os.name == "nt":
-	import servicemanager
-	sysLogInfo = servicemanager.LogInfoMsg
+        import servicemanager
+	sysLogInfo  = servicemanager.LogInfoMsg
 	sysLogError = servicemanager.LogErrorMsg
 else:
 	import syslog
-	sysLogInfo = syslog.syslog
+        def sysLogError(*args):
+                syslog.syslog(syslog.LOG_ERR,*args)
+        def sysLogWarn(*args):
+                syslog.syslog(syslog.LOG_WARNING,*args)        
+        def sysLogInfo(*args):
+                syslog.syslog(syslog.LOG_INFO,*args)
+
+
+	sysLogInfo  = syslog.syslog
 	sysLogError = syslog.syslog
 
 	
@@ -59,7 +67,7 @@ logging.addLevelName(VERBOSE,"VERBOSE")
 
 # Add new method to logging.Logger class on the fly
 def verbose(self, *opts):
-    self.log(VERBOSE, *opts)
+        self.log(VERBOSE, *opts)
 logging.Logger.verbose = verbose
 
 # ------------

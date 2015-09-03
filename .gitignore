@@ -4,6 +4,9 @@ dist
 emadb/*.pyc
 emadb/*.pyo
 emadb/*~
+emadb/server/*.pyc
+emadb/server/*.pyo
+emadb/*~
 myconfig
 myemadb.sh
 *.db

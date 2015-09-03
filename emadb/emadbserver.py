@@ -35,7 +35,7 @@ import os
 import errno
 import sys
 
-from logger      import logToConsole, logToFile
+from server      import logToConsole, logToFile
 from default     import VERSION_STRING
 
 # Only Python 2

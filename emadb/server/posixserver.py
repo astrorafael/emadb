@@ -38,9 +38,7 @@
 # functions instead of object instances. Bound methods would work as 
 # well, but I have not have the need to use isolated functions.
 #
-# The Lazy class is meant to be subclassed and contains all the logic
-# to handle a cyclic counter. When this counter reaches 0 it triggers
-# a callback.
+
 #
 # The Alarmable class is meant to be subclassed and contains all the 
 # logic to handle a counter and triigering a callback when the counter 
@@ -65,8 +63,9 @@ import select
 import logging
 import datetime
 import time
-from   abc import ABCMeta, abstractmethod
 import logger
+
+import misc
 
 log = logging.getLogger('server')
 
@@ -93,7 +92,7 @@ class Server(object):
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
-      Server.TIMEOUT = newT
+      misc.TIMEOUT = newT
 
    def addReadable(self, obj):
       '''
@@ -253,125 +252,4 @@ class Server(object):
       pass
 
 
-# ==========================================================
 
-class Lazy(object):
-   '''
-   Abstract class for all objects implementing a work() method
-   to be used within the select() system call 
-   when this system call times out.
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, period=1.0):
-      self.__count = 0
-      self.__limit = int(round(period/Server.TIMEOUT))
-
-
-   def reset(self):
-      self.__count = 0
-
-
-   def setPeriod(self, period):
-      self.__limit = int(round(period/Server.TIMEOUT))
-
-
-   def mustWork(self):
-      '''
-      Increments counter modulo N.
-      Returns True if counter wraps around.
-      '''
-      self.__count = (self.__count + 1) % self.__limit
-      return  (self.__count == 0)
-
-   @abstractmethod
-   def work(self):
-      '''
-      Work procedure for lazy objects.
-      To be subclassed and overriden
-      '''
-      pass
-
-# ==========================================================
-
-class Alarmable(object):
-   '''
-   Superclass for all objects implementing a OnTimeoutDo() method
-   to be used within the select() system call when this system call times out.
-   Efficient but not accurate implememtation valid for a few seconds 
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, timeout=1.0):
-      self.__count = 0
-      self.__limit = int(round(timeout/Server.TIMEOUT))
-
-
-   def resetAlarm(self):
-      self.__count = 0
-
-
-   def setTimeout(self, timeout):
-      self.__limit = int(round(timeout/Server.TIMEOUT))
-
-
-   def timeout(self):
-      '''
-      Increments counter modulo N.
-      Returns True if counter wraps around.
-      '''
-      self.__count = (self.__count + 1) % self.__limit
-      return  (self.__count == 0)
-
-
-   @abstractmethod
-   def onTimeoutDo(self):
-      '''
-      To be subclassed and overriden
-      '''
-      pass
-
-# ==========================================================
-
-class Alarmable2(object):
-   '''
-   Abstract class for all objects implementing a OnTimeoutDo() method
-   to be used within the select() system call when this system call times out.
-   Accurate implememtation valid for sevtral hours using timestamps. 
-   '''
-
-   __metaclass__ = ABCMeta     # Only Python 2.7
-
-   def __init__(self, timeout=1):
-      self.__delta   = datetime.timedelta(seconds=timeout)
-      self.__tsFinal = datetime.datetime.utcnow() + self.__delta
-
-   def resetAlarm(self):
-      self.__tsFinal    = datetime.datetime.utcnow() + self.__delta
-
-   def setTimeout(self, timeout):
-      self.__delta = datetime.timedelta(seconds=timeout)
-
-
-   def timeout(self):
-      '''
-      Returns True if timeout elapsed.
-      '''
-      return datetime.datetime.utcnow() >= self.__tsFinal   
-
-
-   @abstractmethod
-   def onTimeoutDo(self):
-      '''
-      To be subclassed and overriden
-      '''
-      pass
-
-
-if __name__ == "__main__":
-   utils.setDebug()
-   server = Server()
-   server.run()
-   server.stop()

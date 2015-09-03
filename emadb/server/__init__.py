@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2014 Rafael Gonzalez.
+# Copyright (c) 2015 Rafael Gonzalez.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
 # a copy of this software and associated documentation files (the
@@ -22,28 +22,20 @@
 # ----------------------------------------------------------------------
 
 import os
-import os.path
 import sys
 
-# Default config constants for the EMA Client (command line interface)
-# and Server
-VERSION = '0.1.0'
-VERSION_STRING = "emadb/%s/Python %d.%d" % (VERSION, 
-                                         sys.version_info.major, 
-                                         sys.version_info.minor)
+from alarmable import Alarmable, Alarmable2
+from lazy      import Lazy
+from misc      import TIMEOUT
+from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
 
 
-# Default config file path
 if os.name == "nt":
-    CONFIGFILE=os.path.join("C:", "emadb", "config")
+    from  winserver   import Server
+elif os.name == "posix":
+    from  posixserver import Server
 else:
-    CONFIGFILE="/etc/emadb/config"
-
-
-# Global Log Level for the Root Logger in EMA Client.
-# Note that individual module log levels are handled in config file 
-# Allowed Values => ("CRITICAL", ERROR", "WARN", "INFO", "DEBUG")
-LOGLEVEL="ERROR"
-
+    print("ERROR: unsupported OS")
+    sys.exit(1)
 
 
