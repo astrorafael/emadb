@@ -32,7 +32,11 @@ from misc      import TIMEOUT
 
 
 if os.name == "nt":
-    from  winbgserver import Server
+   import servicemanager
+   if servicemanager.RunningAsService():   
+      from  winbgserver import Server
+   else:
+      from winfgserver import Server
 elif os.name == "posix":
     from  posixserver import Server
 else:

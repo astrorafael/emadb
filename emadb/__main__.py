@@ -29,7 +29,10 @@ import cmdline
 options = cmdline.parser().parse_args()
 
 if os.name == "nt":
-        import winservice
+   if not options.foreground:
+      import winservice
+   else:
+      import posixservice
 elif os.name == "posix":
 	import posixservice
 else:

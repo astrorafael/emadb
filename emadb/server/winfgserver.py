@@ -68,8 +68,9 @@ log = logging.getLogger('server')
 
 
 class Server(object):
-
-   FAVOUR = "Windows Console" 
+   
+   TIMEOUT = 1
+   FLAVOUR = "Windows Console" 
 
    instance = None
 
