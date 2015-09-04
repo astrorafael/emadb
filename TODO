@@ -1,7 +1,3 @@
-* Volver a poner Server.TIMEOUT a todo y quitar el fichero auxiliar
-* --foreground => --interactive
-* probar el arranque de uns ervicio en modo interactivo, a ver si así
-  funciona tambien
 
 * Winserver
   import server at runtime. Y en el __init__ detectar si crre como servicio

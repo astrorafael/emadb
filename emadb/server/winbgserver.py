@@ -58,21 +58,19 @@ import os
 import errno
 import select
 import logging
-import datetime
-import time
 
 import win32api
 import win32con
 import win32event
 
 import logger
-import misc
 
 log = logging.getLogger('server')
 
 
 class Server(object):
 
+   TIMEOUT = 1
    FLAVOUR = "Windows Service"
 
    instance = None
@@ -87,7 +85,7 @@ class Server(object):
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
-      misc.TIMEOUT = newT
+      Server.TIMEOUT = newT
 
    def addReadable(self, obj):
       '''

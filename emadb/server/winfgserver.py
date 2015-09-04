@@ -58,7 +58,6 @@ import os
 import errno
 import select
 import logging
-import datetime
 import time
 
 

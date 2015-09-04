@@ -63,7 +63,7 @@ import select
 import logging
 
 import logger
-import misc
+
 
 log = logging.getLogger('server')
 
@@ -74,7 +74,7 @@ def sighandler(signum, frame):
    Server.instance.sigflag = True
 
 class Server(object):
-
+   TIMEOUT = 1
    FLAVOUR = "POSIX server"
 
    instance = None
@@ -90,7 +90,7 @@ class Server(object):
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
-      misc.TIMEOUT = newT
+      Server.TIMEOUT = newT
 
    def addReadable(self, obj):
       '''

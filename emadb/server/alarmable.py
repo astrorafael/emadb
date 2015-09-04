@@ -21,10 +21,9 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
-import misc
-
 from  abc import ABCMeta, abstractmethod
 
+from . import Server
 
 class Alarmable(object):
    '''
@@ -37,13 +36,13 @@ class Alarmable(object):
 
    def __init__(self, timeout=1.0):
       self.__count = 0
-      self.__limit = int(round(timeout/misc.TIMEOUT))
+      self.__limit = int(round(timeout/Server.TIMEOUT))
 
    def resetAlarm(self):
       self.__count = 0
 
    def setTimeout(self, timeout):
-      self.__limit = int(round(timeout/misc.TIMEOUT))
+      self.__limit = int(round(timeout/Server.TIMEOUT))
 
    def timeout(self):
       '''

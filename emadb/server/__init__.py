@@ -25,11 +25,6 @@ import os
 import sys
 
 from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
-from alarmable import Alarmable, Alarmable2
-from lazy      import Lazy
-from misc      import TIMEOUT
-
-
 
 if os.name == "nt":
    import servicemanager
@@ -42,5 +37,8 @@ elif os.name == "posix":
 else:
     print("ERROR: unsupported OS")
     sys.exit(1)
+    
+from alarmable import Alarmable, Alarmable2
+from lazy      import Lazy
 
 

@@ -29,7 +29,7 @@
 
 from   abc import ABCMeta, abstractmethod
 
-import misc
+from . import Server 
 
 class Lazy(object):
    '''
@@ -42,7 +42,7 @@ class Lazy(object):
 
    def __init__(self, period=1.0):
       self.__count = 0
-      self.__limit = int(round(period/misc.TIMEOUT))
+      self.__limit = int(round(period/Server.TIMEOUT))
 
 
    def reset(self):
@@ -50,7 +50,7 @@ class Lazy(object):
 
 
    def setPeriod(self, period):
-      self.__limit = int(round(period/misc.TIMEOUT))
+      self.__limit = int(round(period/Server.TIMEOUT))
 
 
    def mustWork(self):

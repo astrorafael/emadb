@@ -53,7 +53,7 @@ def parser():
     _parser = argparse.ArgumentParser(prog='emadb')
     _parser.add_argument('--version', action='version', version='%s' % default.VERSION_STRING)
     _parser.add_argument('-k' , '--console', action='store_true', help='log to console')
-    _parser.add_argument('-f' , '--foreground', action='store_true', help='run in foreground (Windows only)')
+    _parser.add_argument('-i' , '--interactive', action='store_true', help='run in foreground (Windows only)')
     _parser.add_argument('-c' , '--config', type=str, action='store', metavar='<config file>', help='detailed configuration file')
     _parser.add_argument('-s' , '--startup', type=str, action='store', metavar='<auto|manual>', help='Windows service starup mode')
     group = _parser.add_mutually_exclusive_group()
