@@ -1,7 +1,23 @@
-*Actualizar doc de instalacion y configuracion en windows
+* Winserver
+  import server at runtime. Y en el __init__ detectar si crre como servicio
+  pasar como args una lista de eventos: Stop, Pause y Reload
+  averiguar si e eventi pausa tiene un valor o o hacemos con oggle
+
+* Posix server: capturar SIGUSR1 para implementar metjdo hold(flag)
+  Tocar el script de inicio para ofrecer esa posibilidad
+  hold() se comportara en modo toggle
+
+* formula de la magnitud visual a partir de los Hz
+
+*Actualizar README.md partiendolo en 3
+  INSTALL.md (instalacion y configuracion para todas las plaaformas)
+  OPRATION.md (los distinos modos de arranque, el reload, pausar)
+  DATA_MODEL.md (explicar el modelo de datos, el modielaod dimensional, las
+condiciones de captura de la EMA (periodo integracion 5seg), el grano de cada tabla y un ejemplo de queries
 
 CONSULTAS
   - subdirectorio de queries 'sql/'
+  - rehacer la BD de tutorial
   - Rango de fechas disponible en RealTimeSamples
   - ¿ Cuando estuvo el aux relay abierto ?
   - ¿ Esta lloviendo ahora ?
@@ -11,7 +27,8 @@ CONSULTAS
 * Instalador en Windows
 * tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
    esos datos desde la EMA
-* formula de la magnitud visual a partir de los Hz
+
+
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
   http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/
