@@ -71,6 +71,20 @@ class WindowsService(win32serviceutil.ServiceFramework):
         log.info("Stopping  %s Windows service", VERSION_STRING )
         logger.sysLogInfo("Stopping %s Windows service" % VERSION_STRING)
         win32event.SetEvent(self.hWaitStop)
+
+    def SvcPause(self):
+        '''Service Pause entry point'''
+        #self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        log.info("Pausing  %s Windows service", VERSION_STRING )
+        logger.sysLogInfo("Pausing %s Windows service" % VERSION_STRING)
+        win32event.SetEvent(self.hWaitPause)
+        
+    def SvcResume(self):
+        '''Service Resume entry point'''
+        #self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        log.info("Resuming  %s Windows service", VERSION_STRING )
+        logger.sysLogInfo("Resuming %s Windows service" % VERSION_STRING)
+        win32event.SetEvent(self.hWaitResume)
         
     
     def SvcDoRun(self):
