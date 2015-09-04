@@ -148,16 +148,24 @@ class Server(object):
       callable(getattr(obj,'mustWork'))
       self.__lazy.append(obj)
 
-   # ------------------------------------
-   # Reload interface, triggered by SIGHUP
-   # ------------------------------------
+   # -------------------------------------------
+   # Reload  & pause interface, triggered by Events
+   # Not supported in this implementation
+   # -------------------------------------------
 
    def reload(self, obj, T):
       '''
-      reloadns configuration aand reconfigures on-line
+      reloads configuration and reconfigures on-line
       '''
       pass
 
+   def pause(self, flag):
+      '''
+      Pauses the server  (True=pause, False=resume)
+      '''
+      pass
+
+   #
    # ---------
    # main loop
    # ---------

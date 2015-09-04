@@ -26,11 +26,6 @@
 #========================================================================#
 [GENERIC]
 
-# If true, the EMADB server will hold incoming MQTT messages instead of 
-# writting them to the SQL database
-# Useful to perform online database maintenance
-on_hold = false
-
 # Log File settings
 log_to_file = yes
 log_file = /var/log/emadb.log

@@ -77,7 +77,7 @@ do_stop()
 }
 
 #
-# Function that sends a SIGHUP to the daemon/service
+# Function that sends a SIGHUP to the daemon/service to reload
 #
 do_reload() {
 	#
@@ -88,6 +88,20 @@ do_reload() {
 	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --exec $DAEMON
 	return 0
 }
+
+#
+# Function that sends a SIGUSR1 to the daemon/service to pause
+#
+do_pause() {
+	#
+	# If the daemon can pause its normal flow
+	# restarting (for example, when it is sent a SUGUSR1),
+	# then implement that here.
+	#
+	start-stop-daemon --stop --signal 10 --quiet --pidfile $PIDFILE --exec $DAEMON
+	return 0
+}
+
 
 case "$1" in
   start)
@@ -118,6 +132,14 @@ case "$1" in
 	do_reload
 	log_end_msg $?
 	;;
+ pause)
+	#
+	# If do_pause() is not implemented then leave this commented out
+	#
+	log_daemon_msg "Pausing $DESC" "$NAME"
+	do_pause
+	log_end_msg $?
+	;;
   restart|force-reload)
 	#
 	# If the "reload" option is implemented then remove the
@@ -141,7 +163,7 @@ case "$1" in
 	esac
 	;;
   *)
-	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload}" >&2
+	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload|pause}" >&2
 	exit 3
 	;;
 esac

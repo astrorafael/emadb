@@ -67,11 +67,17 @@ import logger
 
 log = logging.getLogger('server')
 
-def sighandler(signum, frame):
+def sigreload(signum, frame):
    '''
-   Signal handler (SIGALARM only)
+   Signal handler (SGUHUP only)
    '''
-   Server.instance.sigflag = True
+   Server.instance.sigreload = True
+   
+   def sigpause(signum, frame):
+   '''
+   Signal handler (SIGUSR1 only)
+   '''
+   Server.instance.sigpause = True
 
 class Server(object):
    TIMEOUT = 1
@@ -80,13 +86,17 @@ class Server(object):
    instance = None
 
    def __init__(self, *args):
+      self.__pause = False
       self.__readables  = []
       self.__writables  = []
       self.__alarmables = []
       self.__lazy       = []
-      self.sigflag      = True
+      self.sigreload      = False
+      self.sigpause      = False
+      self.__toggle      = True  # Toggling behaviour of SIGUSR1 (pause)
       Server.instance   = self
-      signal.signal(signal.SIGHUP, sighandler)
+      signal.signal(signal.SIGHUP, sigreload)
+      signal.signal(signal.SIGHUP, sigpause)
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -157,7 +167,7 @@ class Server(object):
       self.__lazy.append(obj)
 
    # ------------------------------------
-   # Reload interface, triggered by SIGHUP
+   # Reload & pause interface, triggered by SIGHUP, SIGUSR1
    # ------------------------------------
 
    def reload(self, obj, T):
@@ -165,6 +175,13 @@ class Server(object):
       reloadns configuration aand reconfigures on-line
       '''
       pass
+
+def pause(self, flag):
+      '''
+      Pauses the server (True=pause, False=resume)
+      '''
+      pass
+
 
    # ---------
    # main loop
@@ -174,16 +191,21 @@ class Server(object):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
-      # Catch SIGHUP signal suring select()
-      # and execute reload
+      # Catch SIGHUP & SIGUSR1 signals during select()
 
       try:
          nreadables, nwritables, _ = select.select(
             self.__readables, self.__writables, [], timeout)
       except select.error as e:
-         if e[0] == errno.EINTR and self.sigflag:
+         if e[0] == errno.EINTR
+         if self.sigreload:
             self.reload()
-            self.sigflag = False
+            self.sigreload = False
+            return [], [], False
+         if self.sigpause:
+            self.pause(self.__toggle)
+            self.__toggle = self.__toggle != True
+            self.sigpause = False
             return [], [], False
          raise
       except Exception:
@@ -232,7 +254,7 @@ class Server(object):
       '''
       while True:
          try:
-            self.step(misc.TIMEOUT)
+            self.step(Server.TIMEOUT)
          except KeyboardInterrupt:
             log.warning("Server.run() aborted by user request")
             break

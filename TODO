@@ -4,9 +4,6 @@
   pasar como args una lista de eventos: Stop, Pause y Reload
   averiguar si e eventi pausa tiene un valor o o hacemos con oggle
 
-* Posix server: capturar SIGUSR1 para implementar metjdo hold(flag)
-  Tocar el script de inicio para ofrecer esa posibilidad
-  hold() se comportara en modo toggle
 
 * formula de la magnitud visual a partir de los Hz
 
