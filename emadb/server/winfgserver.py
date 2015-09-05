@@ -181,8 +181,8 @@ class Server(object):
       # This is a Windows specific quirk: It returns error
       # if the select() sets are empty.
       if len(self.__robj) == 0 and len(self.__wobj) == 0:
-         rc = win32event.WaitForSingleObject(self.__ev, False, 1000*timeout)
-         if rc != win32event.WAIT_OBJECT_0:
+         rc = win32event.WaitForSingleObject(self.__ev, 1000*timeout)
+         if rc != win32event.WAIT_TIMEOUT:
             raise KeyboardInterrupt()
          return [], [], False
       try:
