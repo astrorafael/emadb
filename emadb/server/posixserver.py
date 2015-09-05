@@ -73,7 +73,7 @@ def sigreload(signum, frame):
    '''
    Server.instance.sigreload = True
    
-   def sigpause(signum, frame):
+def sigpause(signum, frame):
    '''
    Signal handler (SIGUSR1 only)
    '''
@@ -87,8 +87,8 @@ class Server(object):
 
    def __init__(self, *args):
       self.__pause = False
-      self.__readables  = []
-      self.__writables  = []
+      self.__robj  = []
+      self.__wobj  = []
       self.__alarmables = []
       self.__lazy       = []
       self.sigreload      = False
@@ -98,9 +98,11 @@ class Server(object):
       signal.signal(signal.SIGHUP, sigreload)
       signal.signal(signal.SIGHUP, sigpause)
 
+
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
       Server.TIMEOUT = newT
+
 
    def addReadable(self, obj):
       '''
@@ -111,13 +113,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onInput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delReadable(self, obj):
       '''Removes readable object from the list, 
       thus avoiding onInput() callback'''
-      self.__readables.pop(self.__readables.index(obj))
+      self.__robj.pop(self.__robj.index(obj))
 
 
    def addWritable(self, obj):
@@ -129,13 +131,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onOutput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delWritable(self, obj):
       '''Removes writable object from the list, 
       thus avoiding onOutput() callback'''
-      self.__writables.pop(self.__writables.index(obj))
+      self.__wobj.pop(self.__wobj.index(obj))
 
 
    def addAlarmable(self, obj):
@@ -176,7 +178,7 @@ class Server(object):
       '''
       pass
 
-def pause(self, flag):
+   def pause(self, flag):
       '''
       Pauses the server (True=pause, False=resume)
       '''
@@ -194,23 +196,20 @@ def pause(self, flag):
       # Catch SIGHUP & SIGUSR1 signals during select()
 
       try:
-         nreadables, nwritables, _ = select.select(
-            self.__readables, self.__writables, [], timeout)
+         nread, nwrite, _ = select.select(self.__robj, self.__wobj, [], timeout)
+         return nread, nwrite, True
       except select.error as e:
-         if e[0] == errno.EINTR
-         if self.sigreload:
-            self.reload()
-            self.sigreload = False
-            return [], [], False
-         if self.sigpause:
-            self.pause(self.__toggle)
-            self.__toggle = self.__toggle != True
-            self.sigpause = False
-            return [], [], False
+         if e[0] == errno.EINTR:
+            if self.sigreload:
+               self.reload()
+               self.sigreload = False
+               return [], [], False
+            if self.sigpause:
+               self.pause(self.__toggle)
+               self.__toggle = self.__toggle != True
+               self.sigpause = False
+               return [], [], False
          raise
-      except Exception:
-         raise
-      return nreadables, nwritables, True
 
 
    def processHandlers( self, nreadables, nwritables):

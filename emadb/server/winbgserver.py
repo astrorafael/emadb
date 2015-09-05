@@ -76,8 +76,8 @@ class Server(object):
    instance = None
 
    def __init__(self, **kargs):
-      self.__readables  = []
-      self.__writables  = []
+      self.__robj  = []
+      self.__wobj  = []
       self.__alarmables = []
       self.__lazy       = []
       self.__hWaitStop = kargs.get("stopEvt",win32event.CreateEvent(None, 0, 0, None))
@@ -96,13 +96,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onInput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delReadable(self, obj):
       '''Removes readable object from the list, 
       thus avoiding onInput() callback'''
-      self.__readables.pop(self.__readables.index(obj))
+      self.__robj.pop(self.__robj.index(obj))
 
 
    def addWritable(self, obj):
@@ -114,13 +114,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onOutput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delWritable(self, obj):
       '''Removes writable object from the list, 
       thus avoiding onOutput() callback'''
-      self.__writables.pop(self.__writables.index(obj))
+      self.__wobj.pop(self.__wobj.index(obj))
 
 
    def addAlarmable(self, obj):
@@ -175,35 +175,31 @@ class Server(object):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
+      # Catch "windows events" during this cycle
       events  = (self.__hWaitStop, self.__hWaitRld)
-      # Catch "windows events" during this cyclo
-      # and execute reload
 
-      try:
-         # This is a Windows specific quirk: It returns error
-         # if the select() sets are empty.
-         if len(self.__readables) == 0 and len(self.__writables) == 0:
-            rc = win32event.WaitForMultipleObjects(events, False, 1000*timeout)
-            if rc == win32event.WAIT_OBJECT_0:
-               raise KeyboardInterrupt()
-            elif rc == win32event.WAIT_OBJECT_0+1:
-               self.reload()
-               return [], [], False
-         else:
-            rc = win32event.WaitForMultipleObjects(events, False, timeout*250)
-            if rc == win32event.WAIT_OBJECT_0:
-               raise KeyboardInterrupt()
-            elif rc == win32event.WAIT_OBJECT_0+1:
-               self.reload()
-               return [], [], False
-                
-            nreadables, nwritables, _ = select.select(
-               self.__readables, self.__writables, [], timeout*0.75)
-      except select.error as e:
-         raise
-      except Exception:
-         raise
-      return nreadables, nwritables, True
+      # This is a Windows specific quirk: It returns error
+      # if the select() sets are empty.
+
+      if len(self.__robj) == 0 and len(self.__wobj) == 0:
+         rc = win32event.WaitForMultipleObjects(events, False, 1000*timeout)
+         if rc == win32event.WAIT_OBJECT_0:
+            raise KeyboardInterrupt()
+         elif rc == win32event.WAIT_OBJECT_0+1:
+            self.reload()
+            return [], [], False
+      else:
+         rc = win32event.WaitForMultipleObjects(events, False, timeout*250)
+         if rc == win32event.WAIT_OBJECT_0:
+            raise KeyboardInterrupt()
+         elif rc == win32event.WAIT_OBJECT_0+1:
+            self.reload()
+            return [], [], False
+
+      nread, nwrite, _ = select.select(self.__robj, self.__wobj, [],
+                                       timeout*0.75)
+      return nread, nwrite, True
+
 
 
    def processHandlers( self, nreadables, nwritables):

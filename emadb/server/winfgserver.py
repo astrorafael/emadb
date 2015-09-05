@@ -74,8 +74,8 @@ class Server(object):
    instance = None
 
    def __init__(self, **kargs):
-      self.__readables  = []
-      self.__writables  = []
+      self.__robj  = []
+      self.__wobj  = []
       self.__alarmables = []
       self.__lazy       = []
 
@@ -93,13 +93,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onInput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delReadable(self, obj):
       '''Removes readable object from the list, 
       thus avoiding onInput() callback'''
-      self.__readables.pop(self.__readables.index(obj))
+      self.__robj.pop(self.__robj.index(obj))
 
 
    def addWritable(self, obj):
@@ -111,13 +111,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'fileno'))
       callable(getattr(obj,'onOutput'))
-      self.__readables.append(obj)
+      self.__robj.append(obj)
 
 
    def delWritable(self, obj):
       '''Removes writable object from the list, 
       thus avoiding onOutput() callback'''
-      self.__writables.pop(self.__writables.index(obj))
+      self.__wobj.pop(self.__wobj.index(obj))
 
 
    def addAlarmable(self, obj):
@@ -173,23 +173,22 @@ class Server(object):
    def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
+      # This is a Windows specific quirk: It returns error
+      # if the select() sets are empty.
+
+      if len(self.__robj) == 0 and len(self.__wobj) == 0:
+         time.sleep(timeout)
+         return [], [], False
+
       try:
-         # This is a Windows specific quirk: It returns error
-         # if the select() sets are empty.
-         if len(self.__readables) == 0 and len(self.__writables) == 0:
-            time.sleep(timeout)
-            return [], [], False
-         else:
-            nreadables, nwritables, _ = select.select(
-               self.__readables, self.__writables, [], timeout*0.75)
+         nread, nwrite, _ = select.select(self.__robj, self.__wobj, [], 
+                                          timeout*0.75)
+         return nreadables, nwritables, True
       except select.error as e:
          if e[0] == errno.EINTR:
             self.reload()
             return [], [], False
          raise
-      except Exception:
-         raise
-      return nreadables, nwritables, True
 
 
    def processHandlers( self, nreadables, nwritables):
