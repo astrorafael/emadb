@@ -60,6 +60,9 @@ import select
 import logging
 import time
 
+import win32api
+import win32con
+import win32event
 
 import logger
 
@@ -73,12 +76,13 @@ class Server(object):
 
    instance = None
 
+   ## We ceate a windows event that will never receive
    def __init__(self, **kargs):
       self.__robj  = []
       self.__wobj  = []
-      self.__alarmables = []
+      self.__alobj = []
       self.__lazy       = []
-
+      self.__ev = win32event.CreateEvent(None, 0, 0, None)
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -129,13 +133,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'timeout'))
       callable(getattr(obj,'onTimeoutDo'))
-      self.__alarmables.append(obj)
+      self.__alobj.append(obj)
 
 
    def delAlarmable(self, obj):
       '''Removes alarmable object from the list, 
       thus avoiding onTimeoutDo() callback'''
-      self.__alarmables.pop(self.__alarmables.index(obj))
+      self.__alobj.pop(self.__alobj.index(obj))
 
 
    def addLazy(self, obj):
@@ -173,13 +177,14 @@ class Server(object):
    def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
+
       # This is a Windows specific quirk: It returns error
       # if the select() sets are empty.
-
       if len(self.__robj) == 0 and len(self.__wobj) == 0:
-         time.sleep(timeout)
+         rc = win32event.WaitForSingleObject(self.__ev, False, 1000*timeout)
+         if rc != win32event.WAIT_OBJECT_0:
+            raise KeyboardInterrupt()
          return [], [], False
-
       try:
          nread, nwrite, _ = select.select(self.__robj, self.__wobj, [], 
                                           timeout*0.75)
@@ -206,7 +211,7 @@ class Server(object):
 
       if not io_activity:                   
          # Execute alarms first
-         for alarm in self.__alarmables:
+         for alarm in self.__alobj:
             if alarm.timeout():
                self.delAlarmable(alarm)
                alarm.onTimeoutDo()

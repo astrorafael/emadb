@@ -78,7 +78,7 @@ class Server(object):
    def __init__(self, **kargs):
       self.__robj  = []
       self.__wobj  = []
-      self.__alarmables = []
+      self.__alobj = []
       self.__lazy       = []
       self.__hWaitStop = kargs.get("stopEvt",win32event.CreateEvent(None, 0, 0, None))
       self.__hWaitRld  = kargs.get("rldEvt",win32event.CreateEvent(None, 0, 0, None))
@@ -132,13 +132,13 @@ class Server(object):
       # Returns AttributeError exception if not
       callable(getattr(obj,'timeout'))
       callable(getattr(obj,'onTimeoutDo'))
-      self.__alarmables.append(obj)
+      self.__alobj.append(obj)
 
 
    def delAlarmable(self, obj):
       '''Removes alarmable object from the list, 
       thus avoiding onTimeoutDo() callback'''
-      self.__alarmables.pop(self.__alarmables.index(obj))
+      self.__alobj.pop(self.__alobj.index(obj))
 
 
    def addLazy(self, obj):
@@ -217,7 +217,7 @@ class Server(object):
 
       if not io_activity:                   
          # Execute alarms first
-         for alarm in self.__alarmables:
+         for alarm in self.__alobj:
             if alarm.timeout():
                self.delAlarmable(alarm)
                alarm.onTimeoutDo()
