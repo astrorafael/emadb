@@ -60,10 +60,6 @@ import select
 import logging
 import time
 
-import win32api
-import win32con
-import win32event
-
 import logger
 
 log = logging.getLogger('server')
@@ -76,13 +72,11 @@ class Server(object):
 
    instance = None
 
-   ## We ceate a windows event that will never receive
    def __init__(self, **kargs):
       self.__robj  = []
       self.__wobj  = []
       self.__alobj = []
       self.__lazy       = []
-      self.__ev = win32event.CreateEvent(None, 0, 0, None)
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -169,7 +163,6 @@ class Server(object):
       '''
       pass
 
-   #
    # ---------
    # main loop
    # ---------
@@ -181,14 +174,12 @@ class Server(object):
       # This is a Windows specific quirk: It returns error
       # if the select() sets are empty.
       if len(self.__robj) == 0 and len(self.__wobj) == 0:
-         rc = win32event.WaitForSingleObject(self.__ev, 1000*timeout)
-         if rc != win32event.WAIT_TIMEOUT:
-            raise KeyboardInterrupt()
-         return [], [], False
+         time.sleep(timeout)
+         return [], [], True
       try:
          nread, nwrite, _ = select.select(self.__robj, self.__wobj, [], 
                                           timeout*0.75)
-         return nreadables, nwritables, True
+         return nread, nwrite, True
       except select.error as e:
          if e[0] == errno.EINTR:
             self.reload()
