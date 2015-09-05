@@ -16,8 +16,6 @@ CONSULTAS
   - ¿ Cuando estuvo el aux relay abierto ?
   - ¿ Esta lloviendo ahora ?
 
-* ¿ Que pasa con el NTP ?
-
 * Interesante para la Pi SD card block size
   https://www.raspberrypi.org/forums/viewtopic.php?t=11258&p=123670
   http://3gfp.com/wp/2014/07/formatting-sd-cards-for-speed-and-lifetime/

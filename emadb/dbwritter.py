@@ -91,10 +91,10 @@ MAG_CLIP_VALUE = 24
 def xtDateTime(tstamp):
    '''Extract and transform Date & Time from (HH:MM:SS DD/MM/YYYY)'''
    # Parse and perform rounding to the nearest minute
-   ts = datetime.datetime.strptime(tstamp, "(%H:%M:%S %d/%m/%Y)") + \
-        datetime.timedelta(minutes=0.5)
-   time_id = ts.hour*100 + ts.minute
-   date_id = ts.year*10000 + ts.month*100 + ts.day
+   ts = datetime.datetime.strptime(tstamp, "(%H:%M:%S %d/%m/%Y)") 
+   tsround = ts + datetime.timedelta(minutes=0.5)
+   time_id = tsround.hour*100   + tsround.minute
+   date_id = tsround.year*10000 + tsround.month*100 + tsround.day
    return date_id, time_id, ts
 
 def xtMeasType(message):
