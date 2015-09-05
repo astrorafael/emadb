@@ -36,7 +36,7 @@ import errno
 import sys
 
 from server      import Server, logToFile, logToConsole
-from default     import VERSION_STRING
+from default     import VERSION_STRING, CONFIG_FILE
 
 # Only Python 2
 import ConfigParser
@@ -72,8 +72,8 @@ class EMADBServer(Server):
         and optionally console output'''
         if opts.console:
             logToConsole()
-        self.__cfgfile = opts.config
-        if not (self.__cfgfile != None and os.path.exists(self.__cfgfile)):
+        self.__cfgfile = opts.config or CONFIG_FILE
+        if not (os.path.exists(self.__cfgfile)):
             log.error("No configuration file found: %s", self.__cfgfile)
             raise IOError(errno.ENOENT,"No such file or directory: %s",
                           self.__cfgfile)
