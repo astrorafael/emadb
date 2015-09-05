@@ -75,13 +75,18 @@ class Server(object):
 
    instance = None
 
-   def __init__(self, **kargs):
+   def __init__(self, stop_event=None, reload_event=None, pause_event=None, resume_event=None):
       self.__robj  = []
-      self.__wobj  = []
+      self.__wobj = []
       self.__alobj = []
-      self.__lazy       = []
-      self.__hWaitStop = kargs.get("stopEvt",win32event.CreateEvent(None, 0, 0, None))
-      self.__hWaitRld  = kargs.get("rldEvt",win32event.CreateEvent(None, 0, 0, None))
+      self.__lazy  = []
+      self.__events  = [
+         stop_event or win32event.CreateEvent(None, 0, 0, None),
+         reload_event or win32event.CreateEvent(None, 0, 0, None),
+         pause_event or win32event.CreateEvent(None, 0, 0, None),
+         resume_event or win32event.CreateEvent(None, 0, 0, None),
+      ]
+         
 
    def SetTimeout(self, newT):
       '''Set the select() timeout'''
@@ -171,31 +176,34 @@ class Server(object):
    # main loop
    # ---------
 
-   def waitForActivity(self, timeout):
+   def handleWindowsEvents(self, timeout):
+      '''Handle windows service events, Returns timeout flag'''
+      rc = win32event.WaitForMultipleObjects(self.__events, False, 1000*timeout)
+      if rc == win32event.WAIT_OBJECT_0:
+         raise KeyboardInterrupt()
+      elif rc == win32event.WAIT_OBJECT_0+1:
+         self.reload()
+         return False
+      elif rc == win32event.WAIT_OBJECT_0+2:
+         self.pause(True)
+         return False
+      elif rc == win32event.WAIT_OBJECT_0+3:
+         self.pause(False)
+         return False
+      elif rc == win32event.WAIT_TIMEOUT:
+         return True
+      raise WindowsError()
+       
+       
+   def waitForActivity(self, interval):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
-
-      # Catch "windows events" during this cycle
-      events  = (self.__hWaitStop, self.__hWaitRld)
-
       # This is a Windows specific quirk: It returns error
       # if the select() sets are empty.
-
       if len(self.__robj) == 0 and len(self.__wobj) == 0:
-         rc = win32event.WaitForMultipleObjects(events, False, 1000*timeout)
-         if rc == win32event.WAIT_OBJECT_0:
-            raise KeyboardInterrupt()
-         elif rc == win32event.WAIT_OBJECT_0+1:
-            self.reload()
-            return [], [], False
-      else:
-         rc = win32event.WaitForMultipleObjects(events, False, timeout*250)
-         if rc == win32event.WAIT_OBJECT_0:
-            raise KeyboardInterrupt()
-         elif rc == win32event.WAIT_OBJECT_0+1:
-            self.reload()
-            return [], [], False
+         return [], [], self.handleWindowsEvents(interval*1000)
 
+      self.handleWindowsEvents(interval*250)
       nread, nwrite, _ = select.select(self.__robj, self.__wobj, [],
                                        timeout*0.75)
       return nread, nwrite, True
