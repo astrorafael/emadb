@@ -419,21 +419,21 @@ class Units(object):
             units_id           INTEGER PRIMARY KEY, 
             roof_relay         TEXT,
             aux_relay          TEXT,
-            voltage            TEXT,
-            wet                TEXT,
-            cloudy             TEXT,
-            cal_pressure       TEXT,
-            abs_pressure       TEXT,
-            rain               TEXT,
-            irradiation        TEXT,
-            vis_magnitude      TEXT,
-            frequency          TEXT,
-            temperature        TEXT,
-            rel_humidity       TEXT,
-            dew_point          TEXT,
-            wind_speed         TEXT,
-            wind_direction     TEXT,
-            lag                TEXT
+            voltage_units      TEXT,
+            wet_units          TEXT,
+            cloudy_units       TEXT,
+            cal_pressure_units TEXT,
+            abs_pressure_units TEXT,
+            rain_units         TEXT,
+            irradiation_units  TEXT,
+            magnitude_units    TEXT,
+            frequency_units    TEXT,
+            temperature_units  TEXT,
+            rel_humidity_units TEXT,
+            dew_point_units    TEXT,
+            wind_speed_units   TEXT,
+            wind_direction_units TEXT,
+            lag_units          TEXT
             );
             """
         )
@@ -554,7 +554,8 @@ class RealTimeSamples(object):
             wind_speed         REAL,
             wind_direction     INTEGER,
             timestamp          TEXT,
-            lag                INTEGER,
+            lag1               INTEGER,
+            lag2               INTEGER,
             PRIMARY KEY (date_id, time_id, station_id)
             );
             """

@@ -39,6 +39,7 @@
 import logging
 import paho.mqtt.client as mqtt
 import socket
+import datetime
 from   abc import ABCMeta, abstractmethod
 
 from server import Lazy, Server
@@ -68,7 +69,7 @@ def on_disconnect(client, userdata, rc):
 # Callback when a PUBLISH message is received from the server.
 # The default message callback
 def on_message(client, userdata, msg):
-    userdata.onMessage(msg)
+    userdata.onMessage(msg, datetime.datetime.utcnow())
 
 # Callback subscriptions
 def on_subscribe(client, userdata, mid, granted_qos):
@@ -142,7 +143,7 @@ class MQTTGenericSubscriber(Lazy):
 
 
    @abstractmethod
-   def onMessage(self, msg):
+   def onMessage(self, msg, tstamp):
       '''
       Process incoming messages from subscribed topics.
       Typically will pass the message to a backend object via

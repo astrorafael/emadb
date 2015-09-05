@@ -1,5 +1,3 @@
-* Cambiar columnas de Units para doder usar natral joun => _units
-* Añadir un timestamp a la entrada de los mensajes del MQTT
 * Errores de transmision y exponnetial backoff
 * tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
    esos datos desde la EMA

@@ -37,7 +37,7 @@ class MQTTClient(MQTTGenericSubscriber):
    def __init__(self, srv, parser):
       MQTTGenericSubscriber.__init__(self, srv, parser)
 
-   def onMessage(self, msg):
+   def onMessage(self, msg, tstamp):
       log.debug("Received message on topic = %s, QoS = %d, retain = %s",
                 msg.topic, msg.qos, msg.retain)
       id = msg.topic.split('/')[1]
@@ -46,7 +46,7 @@ class MQTTClient(MQTTGenericSubscriber):
       elif msg.topic.endswith("history/samples"):
          self.srv.onSamplesMessage(id, msg.payload)
       elif msg.topic.endswith("current/status"):
-         self.srv.onStatusMessage(id, msg.payload)
+         self.srv.onStatusMessage(id, msg.payload, tstamp)
       else:
          log.warn("message received on unexpected topic %s", msg.topic)
 
