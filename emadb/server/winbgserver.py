@@ -177,8 +177,10 @@ class Server(object):
    # ---------
 
    def handleWindowsEvents(self, timeout):
-      '''Handle windows service events, Returns timeout flag'''
-      rc = win32event.WaitForMultipleObjects(self.__events, False, 1000*timeout)
+      '''Handle windows service events, 
+      timeout in milliseconds
+      Returns timeout flag'''
+      rc = win32event.WaitForMultipleObjects(self.__events, False, timeout)
       if rc == win32event.WAIT_OBJECT_0:
          raise KeyboardInterrupt()
       elif rc == win32event.WAIT_OBJECT_0+1:
@@ -205,7 +207,7 @@ class Server(object):
 
       self.handleWindowsEvents(interval*250)
       nread, nwrite, _ = select.select(self.__robj, self.__wobj, [],
-                                       timeout*0.75)
+                                       interval*750)
       return nread, nwrite, True
 
 
