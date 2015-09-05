@@ -1,8 +1,7 @@
 
 * Winserver
-  import server at runtime. Y en el __init__ detectar si crre como servicio
-  pasar como args una lista de eventos: Stop, Pause y Reload
-  averiguar si e eventi pausa tiene un valor o o hacemos con oggle
+  Averigaur que espera windows tras hacer pause para luego poder 
+ hacer el continuar
 
 * Unknown Indes = -1 para todos. El 0 puede ser interesante
 
