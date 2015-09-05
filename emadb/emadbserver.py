@@ -55,7 +55,6 @@ class EMADBServer(Server):
             'status':  [] ,
             'samples': [] ,
         }
-        self.__stopped = False
         self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
         self.__parser.read(self.__cfgfile)
@@ -109,15 +108,19 @@ class EMADBServer(Server):
         log.info("===============")
 
 
-    def pause(self, stopped):
+    def pause(self):
         '''
-        Pauses the server (True=stopped, False=resume)
+        Pauses the server 
         '''
-        log.info("on hold = %s", stopped)
-        if self.__stopped and not stopped:
-            log.info("flushing queues")
-            self.flush()
-        self.__stopped = stopped
+        log.info("on hold = %s", self.paused)
+ 
+    def resume(self):
+        '''
+        Resumes the server 
+        '''
+        log.info("on hold = %s", self.paused)
+        self.flush()
+ 
       
     # --------------
     # Queue Handing
@@ -137,7 +140,7 @@ class EMADBServer(Server):
 
     def onMinMaxMessage(self, mqtt_id, payload):
         self.__queue['minmax'].append((mqtt_id, payload))
-        if self.__stopped:
+        if self.paused:
             log.warning("Holding %d minmax messages on queue",
                         len(self.__queue['minmax']))
             return
@@ -147,7 +150,7 @@ class EMADBServer(Server):
 
     def onStatusMessage(self, mqtt_id, payload):
         self.__queue['status'].append((mqtt_id, payload))
-        if self.__stopped:
+        if self.paused:
             log.warning("Holding %d status messages on queue",
                         len(self.__queue['status']))
             return
@@ -157,7 +160,7 @@ class EMADBServer(Server):
 
     def onSamplesMessage(self, mqtt_id, payload):
         self.__queue['samples'].append((mqtt_id, payload))
-        if self.__stopped:
+        if self.paused:
             log.warning("Holding %d sample messages on queue", 
                         len(self._queue['samples']))
             return

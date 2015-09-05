@@ -79,6 +79,12 @@ def sigpause(signum, frame):
    '''
    Server.instance.sigpause = True
 
+def sigresume(signum, frame):
+   '''
+   Signal handler (SIGUSR2 only)
+   '''
+   Server.instance.sigresume = True
+
 class Server(object):
    TIMEOUT = 1
    FLAVOUR = "POSIX server"
@@ -86,23 +92,23 @@ class Server(object):
    instance = None
 
    def __init__(self, *args):
-      self.__pause = False
-      self.__robj  = []
-      self.__wobj  = []
-      self.__alobj = []
-      self.__lazy  = []
+      self.__paused   = False  
+      self.__robj     = []
+      self.__wobj     = []
+      self.__alobj    = []
+      self.__lazy     = []
       self.sigreload  = False
       self.sigpause   = False
-      self.__toggle   = True  # Toggling behaviour of SIGUSR1 (pause)
+      self.sigresume  = False
       Server.instance = self
       signal.signal(signal.SIGHUP, sigreload)
       signal.signal(signal.SIGUSR1, sigpause)
+      signal.signal(signal.SIGUSR2, sigresume)
 
 
-   def SetTimeout(self, newT):
-      '''Set the select() timeout'''
-      Server.TIMEOUT = newT
-
+   # -------------------------------
+   # Event I/O registering interface
+   # -------------------------------
 
    def addReadable(self, obj):
       '''
@@ -139,6 +145,9 @@ class Server(object):
       thus avoiding onOutput() callback'''
       self.__wobj.pop(self.__wobj.index(obj))
 
+   # -------------------------------
+   # Alarmable registering interface
+   # -------------------------------
 
    def addAlarmable(self, obj):
       '''
@@ -158,6 +167,10 @@ class Server(object):
       self.__alobj.pop(self.__alobj.index(obj))
 
 
+   # --------------------------
+   # Lazy registering interface
+   # --------------------------
+
    def addLazy(self, obj):
       '''
       Adds an object implementing the work() and mustWork() methods 
@@ -168,32 +181,64 @@ class Server(object):
       callable(getattr(obj,'mustWork'))
       self.__lazy.append(obj)
 
-   # ------------------------------------
-   # Reload & pause interface, triggered by SIGHUP, SIGUSR1
-   # ------------------------------------
+   # -------------------------------------
+   # Reload interface, triggered by SIGHUP
+   # -------------------------------------
 
-   def reload(self, obj, T):
+   def reload(self):
       '''
-      reloadns configuration aand reconfigures on-line
+      reload configuration aand reconfigures on-line. To be overriden
       '''
       pass
 
-   def pause(self, flag):
+   # --------------------------------------------------------
+   # Pause /resume interface, triggered by SIGUSR1, SUGUSR2
+   # --------------------------------------------------------
+
+   @property
+   def paused(self):
+      return self.__paused
+
+
+   def pause(self):
       '''
-      Pauses the server (True=pause, False=resume)
+      Pause server activity. To be overriden by child classes
       '''
       pass
 
+
+   def resume(self):
+      '''
+      Continue server activity. To be overriden by child classes.
+      '''
+      pass
+
+   def handlePause(self):
+      if self.__paused:
+         return
+      self.__paused = True
+      self.pause()
+
+   def handleResume(self):
+      if not self.__paused:
+         return
+      self.__paused = False
+      self.resume()
 
    # ---------
    # main loop
    # ---------
 
+   def SetTimeout(self, newT):
+      '''Set the select() timeout'''
+      Server.TIMEOUT = newT
+
+
    def waitForActivity(self, timeout):
       '''Wait for activity. Return list of changed objects and
       a next step flag (True = next step is needed)'''
 
-      # Catch SIGHUP & SIGUSR1 signals during select()
+      # Catch SIGHUP, SIGUSR1, SUGUSR2 signals during select()
 
       try:
          nread, nwrite, _ = select.select(self.__robj, self.__wobj, [], timeout)
@@ -205,9 +250,12 @@ class Server(object):
                self.sigreload = False
                return [], [], False
             if self.sigpause:
-               self.pause(self.__toggle)
-               self.__toggle = self.__toggle != True
+               self.handlePause()
                self.sigpause = False
+               return [], [], False
+            if self.sigresume:
+               self.handleResume()
+               self.sigresume = False
                return [], [], False
          raise
 

@@ -65,8 +65,11 @@ class WindowsService(win32serviceutil.ServiceFramework):
         self.pause  = win32event.CreateEvent(None, 0, 0, None)
         self.resume = win32event.CreateEvent(None, 0, 0, None)
         self.server = EMADBServer(cmdline.parser().parse_args(args=args), 
-            stop_event=self.stop,  reload_event=self.reload, 
-            pause_event=self.pause, resume_event=self.resume)
+                                  parent=self,
+                                  stop_event=self.stop,  
+                                  reload_event=self.reload, 
+                                  pause_event=self.pause, 
+                                  resume_event=self.resume)
 
     def SvcStop(self):
         '''Service Stop entry point'''
@@ -75,13 +78,14 @@ class WindowsService(win32serviceutil.ServiceFramework):
         logger.sysLogInfo("Stopping %s Windows service" % VERSION_STRING)
         win32event.SetEvent(self.stop)
 
+
     def SvcPause(self):
         '''Service Pause entry point'''
         self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
         log.info("Pausing  %s Windows service", VERSION_STRING )
         logger.sysLogInfo("Pausing %s Windows service" % VERSION_STRING)
-        self.ReportServiceStatus(win32service.SERVICE_PAUSED)
         win32event.SetEvent(self.pause)
+
         
     def SvcContinue(self):
         '''Service Continue entry point'''
@@ -89,7 +93,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
         log.info("Resuming  %s Windows service", VERSION_STRING )
         logger.sysLogInfo("Resuming %s Windows service" % VERSION_STRING)
         win32event.SetEvent(self.resume)
-        self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+
         
     def SvcOtherEx(self, control, event_type, data):
         '''Implements a Reload functionality as a  service custom control'''
@@ -98,9 +102,11 @@ class WindowsService(win32serviceutil.ServiceFramework):
         else:
             self.SvcOther(control)
             
+
     def SvcDoReload(self):
         logger.sysLogInfo("reloading emadb service")
         win32event.SetEvent(self.reload)
+
 
     def SvcDoRun(self):
         '''Service Run entry point'''
@@ -108,6 +114,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
         self.server.run()
         self.server.stop()
         logger.sysLogInfo("%s Windows service stopped" % VERSION_STRING)
+
     
 def ctrlHandler(ctrlType):
     return True

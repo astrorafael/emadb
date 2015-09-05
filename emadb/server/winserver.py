@@ -75,22 +75,24 @@ class Server(object):
 
    instance = None
 
-   def __init__(self, stop_event=None, reload_event=None, pause_event=None, resume_event=None):
-      self.__robj  = []
-      self.__wobj = []
-      self.__alobj = []
-      self.__lazy  = []
-      self.__events  = [
-         stop_event or win32event.CreateEvent(None, 0, 0, None),
+   def __init__(self, parent=None, stop_event=None, reload_event=None, 
+                pause_event=None, resume_event=None):
+      self.__paused = False
+      self.__parent = parent
+      self.__robj   = []
+      self.__wobj   = []
+      self.__alobj  = []
+      self.__lazy   = []
+      self.__events = [
+         stop_event   or win32event.CreateEvent(None, 0, 0, None),
          reload_event or win32event.CreateEvent(None, 0, 0, None),
-         pause_event or win32event.CreateEvent(None, 0, 0, None),
+         pause_event  or win32event.CreateEvent(None, 0, 0, None),
          resume_event or win32event.CreateEvent(None, 0, 0, None),
       ]
          
-
-   def SetTimeout(self, newT):
-      '''Set the select() timeout'''
-      Server.TIMEOUT = newT
+   # -------------------------------
+   # Event I/O registering interface
+   # -------------------------------
 
    def addReadable(self, obj):
       '''
@@ -127,6 +129,9 @@ class Server(object):
       thus avoiding onOutput() callback'''
       self.__wobj.pop(self.__wobj.index(obj))
 
+   # -------------------------------
+   # Alarmable registering interface
+   # -------------------------------
 
    def addAlarmable(self, obj):
       '''
@@ -146,6 +151,10 @@ class Server(object):
       self.__alobj.pop(self.__alobj.index(obj))
 
 
+   # --------------------------
+   # Lazy registering interface
+   # --------------------------
+
    def addLazy(self, obj):
       '''
       Adds an object implementing the work() and mustWork() methods 
@@ -155,20 +164,69 @@ class Server(object):
       callable(getattr(obj,'work'))
       callable(getattr(obj,'mustWork'))
       self.__lazy.append(obj)
-
-   # -------------------------------------------
-   # Reload & pause interface, triggered by Events
-   # -------------------------------------------
-
-   def reload(self, obj, T):
+   
+   # ---------------------------------------------------
+   # Reload interface, triggered by reload cumstom Event
+   # ---------------------------------------------------
+   
+   def reload(self):
       '''
       reloads configuration and reconfigures on-line
       '''
       pass
 
-   def pause(self, flag):
+   # --------------------------------------------------------
+   # Pause /resume interface, triggered by SIGUSR1, SUGUSR2
+   # --------------------------------------------------------
+
+   @property
+   def paused(self):
+      return self.__paused
+
+   def pause(self):
       '''
-      Pauses the server (True=pause, False=resume)
+      Pause server activity. To be overriden by child classes
+      '''
+      pass
+
+   def resume(self):
+      '''
+      Continue server activity. To be overriden by child classes.
+      '''
+      pass
+
+   def handlePause(self):
+      if self.__paused:
+         return
+      self.__paused = True
+      self.pause()
+      if self.__parent:
+         self.__parent.ReportServiceStatus(win32service.SERVICE_PAUSED)
+
+
+   def handleResume(self):
+      if not self.__paused:
+         return
+      self.__paused = False
+      self.resume()
+      if self.__parent:
+         self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+
+   # ----------------------
+   # stop internal interface
+   # ----------------------
+
+   def handleStop(self):
+      '''The application will call stop upon exiting the main loop'''
+      if self.__parent:
+         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
+      raise KeyboardInterrupt()
+
+
+   def stop(self):
+      '''
+      Performs server clean up activity before exiting.
+      To be subclassed if needed
       '''
       pass
 
@@ -176,21 +234,26 @@ class Server(object):
    # main loop
    # ---------
 
+   def SetTimeout(self, newT):
+      '''Set the select() timeout'''
+      Server.TIMEOUT = newT
+
+
    def handleWindowsEvents(self, timeout):
       '''Handle windows service events, 
       timeout in milliseconds
       Returns timeout flag'''
       rc = win32event.WaitForMultipleObjects(self.__events, False, timeout)
       if rc == win32event.WAIT_OBJECT_0:
-         raise KeyboardInterrupt()
+         self.handleStop()
       elif rc == win32event.WAIT_OBJECT_0+1:
          self.reload()
          return False
       elif rc == win32event.WAIT_OBJECT_0+2:
-         self.pause(True)
+         self.handlePause()
          return False
       elif rc == win32event.WAIT_OBJECT_0+3:
-         self.pause(False)
+         self.handleResume()
          return False
       elif rc == win32event.WAIT_TIMEOUT:
          return True
@@ -263,10 +326,5 @@ class Server(object):
             break
          
 
-   def stop(self):
-      '''
-      Performs server clean up activity before exiting.
-      To be subclassed if needed
-      '''
-      pass
+
 

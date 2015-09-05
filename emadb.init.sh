@@ -102,28 +102,41 @@ do_pause() {
 	return 0
 }
 
+#
+# Function that sends a SIGUSR2 to the daemon/service to resume
+#
+do_resume() {
+	#
+	# If the daemon can pause its normal flow
+	# restarting (for example, when it is sent a SUGUSR1),
+	# then implement that here.
+	#
+	start-stop-daemon --stop --signal 12 --quiet --pidfile $PIDFILE --exec $DAEMON
+	return 0
+}
+
 
 case "$1" in
-  start)
+    start)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Starting $DESC" "$NAME"
 	do_start
 	case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	    0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+	    2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
 	esac
 	;;
-  stop)
+    stop)
 	[ "$VERBOSE" != no ] && log_daemon_msg "Stopping $DESC" "$NAME"
 	do_stop
 	case "$?" in
-		0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
-		2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
+	    0|1) [ "$VERBOSE" != no ] && log_end_msg 0 ;;
+	    2) [ "$VERBOSE" != no ] && log_end_msg 1 ;;
 	esac
 	;;
-  status)
+    status)
 	status_of_proc "$DAEMON" "$NAME" && exit 0 || exit $?
 	;;
-  reload|force-reload)
+    reload|force-reload)
 	#
 	# If do_reload() is not implemented then leave this commented out
 	# and leave 'force-reload' as an alias for 'restart'.
@@ -132,15 +145,20 @@ case "$1" in
 	do_reload
 	log_end_msg $?
 	;;
- pause)
-	#
-	# If do_pause() is not implemented then leave this commented out
-	#
+    pause)
 	log_daemon_msg "Pausing $DESC" "$NAME"
 	do_pause
 	log_end_msg $?
 	;;
-  restart|force-reload)
+    resume)
+	#
+	# If do_pause() is not implemented then leave this commented out
+	#
+	log_daemon_msg "Resume $DESC" "$NAME"
+	do_resume
+	log_end_msg $?
+	;;
+    restart|force-reload)
 	#
 	# If the "reload" option is implemented then remove the
 	# 'force-reload' alias
@@ -148,22 +166,22 @@ case "$1" in
 	log_daemon_msg "Restarting $DESC" "$NAME"
 	do_stop
 	case "$?" in
-	  0|1)
+	    0|1)
 		do_start
 		case "$?" in
-			0) log_end_msg 0 ;;
-			1) log_end_msg 1 ;; # Old process is still running
-			*) log_end_msg 1 ;; # Failed to start
+		    0) log_end_msg 0 ;;
+		    1) log_end_msg 1 ;; # Old process is still running
+		    *) log_end_msg 1 ;; # Failed to start
 		esac
 		;;
-	  *)
+	    *)
 		# Failed to stop
 		log_end_msg 1
 		;;
 	esac
 	;;
-  *)
-	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload|pause}" >&2
+    *)
+	echo "Usage: $SCRIPTNAME {start|stop|restart|reload|force-reload|pause|resume}" >&2
 	exit 3
 	;;
 esac
