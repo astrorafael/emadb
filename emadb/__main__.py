@@ -26,10 +26,13 @@ import sys
 
 import cmdline
 
-#options = cmdline.parser().parse_args()
+options = cmdline.parser().parse_args()
 
 if os.name == "nt":
-	import winservice
+	if not options.interactive:
+		import winservice
+	else:
+		import posixservice
 elif os.name == "posix":
 	import posixservice
 else:

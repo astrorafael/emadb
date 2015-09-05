@@ -1,1 +1,1 @@
-python -m emadb --interactive start --config "C:\emadb\config\config.ini"
+python -m emadb --startup auto start --config "C:\emadb\config\config.ini"
