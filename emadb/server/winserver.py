@@ -182,7 +182,6 @@ class Server(object):
       Returns timeout flag'''
       rc = win32event.WaitForMultipleObjects(self.__events, False, timeout)
       if rc == win32event.WAIT_OBJECT_0:
-         log.info("Receiving STOP REQUEST")
          raise KeyboardInterrupt()
       elif rc == win32event.WAIT_OBJECT_0+1:
          self.reload()

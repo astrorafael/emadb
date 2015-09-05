@@ -77,15 +77,19 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def SvcPause(self):
         '''Service Pause entry point'''
+        self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
         log.info("Pausing  %s Windows service", VERSION_STRING )
         logger.sysLogInfo("Pausing %s Windows service" % VERSION_STRING)
+        self.ReportServiceStatus(win32service.SERVICE_PAUSED)
         win32event.SetEvent(self.pause)
         
     def SvcContinue(self):
         '''Service Continue entry point'''
+        self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
         log.info("Resuming  %s Windows service", VERSION_STRING )
         logger.sysLogInfo("Resuming %s Windows service" % VERSION_STRING)
         win32event.SetEvent(self.resume)
+        self.ReportServiceStatus(win32service.SERVICE_RUNNING)
         
     def SvcOtherEx(self, control, event_type, data):
         '''Implements a Reload functionality as a  service custom control'''
