@@ -62,6 +62,7 @@ import logging
 import win32api
 import win32con
 import win32event
+import win32service
 
 import logger
 
@@ -210,7 +211,7 @@ class Server(object):
       self.__paused = False
       self.resume()
       if self.__parent:
-         self.ReportServiceStatus(win32service.SERVICE_RUNNING)
+         self.__parent.ReportServiceStatus(win32service.SERVICE_RUNNING)
 
    # ----------------------
    # stop internal interface
@@ -219,7 +220,7 @@ class Server(object):
    def handleStop(self):
       '''The application will call stop upon exiting the main loop'''
       if self.__parent:
-         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
+         self.__parent.ReportServiceStatus(win32service.SERVICE_STOPPED)
       raise KeyboardInterrupt()
 
 
