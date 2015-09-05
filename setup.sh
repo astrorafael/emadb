@@ -81,10 +81,6 @@ fi
 
 # Display EMADB usages
 echo
-echo "=================================================================="
+echo "============================"
 echo "EMADB successfully installed"
-echo "* To start EMADB daemon in the foreground\t: sudo emadb"
-echo
-echo "* To start EMADB Daemon background\t: sudo service emadb start"
-echo "* To start EMADB Daemon at boot\t: sudo update-rc.d emadb defaults"
-echo "=================================================================="
+echo "============================"

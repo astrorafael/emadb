@@ -87,8 +87,8 @@ dbase_year_start = 2015
 dbase_year_end   = 2025
 
 # Date format for the Date dimension (date field)
-# Examples: ("%Y/%m/%d" => 2015/12/31) ("%d/%m/%Y" => 31/12/2015)
-dbase_date_fmt = "%d/%m/%Y"
+# Examples: (%Y/%m/%d => 2015/12/31) (%d/%m/%Y => 31/12/2015)
+dbase_date_fmt = %d/%m/%Y
 
 # Auto Purge RealTimeSamples table every day (at midnight UTC)
 # or let it grow
