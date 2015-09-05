@@ -32,7 +32,7 @@
 #    python -m emadb --config /etc/emadb/config
 #
 # 3) Windows, foreground mode
-#   python -m emadb  --foreground --console  --config "C:\emadb\config\config.ini"
+#   python -m emadb  --interactive --console  --config "C:\emadb\config\config.ini"
 #
 # 4) Windows, service mode (order is important!)
 #   4.1 install the service
