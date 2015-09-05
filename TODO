@@ -1,14 +1,24 @@
 
 * Winserver
-  import server at runtime. Y en el __init__ detectar si crre como servicio
-  pasar como args una lista de eventos: Stop, Pause y Reload
-  averiguar si e eventi pausa tiene un valor o o hacemos con oggle
+  Averigaur que espera windows tras hacer pause para luego poder 
+ hacer el continuar
 
-* Posix server: capturar SIGUSR1 para implementar metjdo hold(flag)
-  Tocar el script de inicio para ofrecer esa posibilidad
-  hold() se comportara en modo toggle
+* Unknown Indes = -1 para todos. El 0 puede ser interesante
 
 * formula de la magnitud visual a partir de los Hz
+float HzToMag(float HzTSL ) //recibe Hz del sensor TSL y retorna magnitud visual
+{
+  float mv;
+     mv = HzTSL/230.0;             // Iradiancia en (uW/cm2)/10
+     if (mv>0){
+        mv = mv * 0.000001;       //irradiancia en W/cm2
+        mv = -1*(log10(mv)/log10(2.5));    //log en base 2.5
+        if (mv < 0) mv = 24;
+     }
+     else mv = 24;
+
+     return mv;
+}
 
 *Actualizar README.md partiendolo en 3
   INSTALL.md (instalacion y configuracion para todas las plaaformas)

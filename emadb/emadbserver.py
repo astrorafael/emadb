@@ -36,7 +36,7 @@ import errno
 import sys
 
 from server      import Server, logToFile, logToConsole
-from default     import VERSION_STRING
+from default     import VERSION_STRING, CONFIG_FILE
 
 # Only Python 2
 import ConfigParser
@@ -56,7 +56,6 @@ class EMADBServer(Server):
             'samples': [] ,
         }
         self.__stopped = False
-
         self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
         self.__parser.read(self.__cfgfile)
@@ -73,8 +72,8 @@ class EMADBServer(Server):
         and optionally console output'''
         if opts.console:
             logToConsole()
-        self.__cfgfile = opts.config
-        if not (self.__cfgfile != None and os.path.exists(self.__cfgfile)):
+        self.__cfgfile = opts.config or CONFIG_FILE
+        if not (os.path.exists(self.__cfgfile)):
             log.error("No configuration file found: %s", self.__cfgfile)
             raise IOError(errno.ENOENT,"No such file or directory: %s",
                           self.__cfgfile)
@@ -94,7 +93,6 @@ class EMADBServer(Server):
         logging.getLogger().info("Starting %s, %s",
                                  VERSION_STRING, self.FLAVOUR)
         log.info("Loaded configuration from %s", self.__cfgfile)
-        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
 
 
     def reload(self):
@@ -104,7 +102,6 @@ class EMADBServer(Server):
         log.info("=======================")
         self.__parser.read(self.__cfgfile)
         log.setLevel(self.__parser.get("GENERIC", "generic_log"))
-        self.hold(self.__parser.getboolean("GENERIC", "on_hold"))
         self.mqttclient.reload()
         self.dbwritter.reload()
         log.info("===============")
@@ -112,18 +109,19 @@ class EMADBServer(Server):
         log.info("===============")
 
 
-    # --------------
-    # Queue Handing
-    # -------------
-
-    def hold(self, stopped):
-        '''Stop/Resume enqueing messages from the queue'''
+    def pause(self, stopped):
+        '''
+        Pauses the server (True=stopped, False=resume)
+        '''
         log.info("on hold = %s", stopped)
         if self.__stopped and not stopped:
             log.info("flushing queues")
             self.flush()
         self.__stopped = stopped
-
+      
+    # --------------
+    # Queue Handing
+    # -------------
 
     def flush(self):
         '''Flushes queues, sending messages to destination'''

@@ -35,9 +35,9 @@ VERSION_STRING = "emadb/%s/Python %d.%d" % (VERSION,
 
 # Default config file path
 if os.name == "nt":
-    CONFIGFILE=os.path.join("C:", "emadb", "config")
+    CONFIG_FILE=os.path.join("C:\\", "emadb", "config", "config.ini")
 else:
-    CONFIGFILE="/etc/emadb/config"
+    CONFIG_FILE="/etc/emadb/config"
 
 
 # Global Log Level for the Root Logger in EMA Client.

@@ -27,11 +27,7 @@ import sys
 from logger    import VERBOSE, logToConsole, logToFile, sysLogInfo, sysLogError
 
 if os.name == "nt":
-   import servicemanager
-   if servicemanager.RunningAsService():   
-      from  winbgserver import Server
-   else:
-      from winfgserver import Server
+    from winserver import Server
 elif os.name == "posix":
     from  posixserver import Server
 else:
