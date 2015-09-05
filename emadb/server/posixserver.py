@@ -90,13 +90,13 @@ class Server(object):
       self.__robj  = []
       self.__wobj  = []
       self.__alobj = []
-      self.__lazy       = []
-      self.sigreload      = False
-      self.sigpause      = False
-      self.__toggle      = True  # Toggling behaviour of SIGUSR1 (pause)
-      Server.instance   = self
+      self.__lazy  = []
+      self.sigreload  = False
+      self.sigpause   = False
+      self.__toggle   = True  # Toggling behaviour of SIGUSR1 (pause)
+      Server.instance = self
       signal.signal(signal.SIGHUP, sigreload)
-      signal.signal(signal.SIGHUP, sigpause)
+      signal.signal(signal.SIGUSR1, sigpause)
 
 
    def SetTimeout(self, newT):
