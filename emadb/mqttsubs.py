@@ -231,10 +231,12 @@ class MQTTGenericSubscriber(Lazy):
          self.srv.addReadable(self)
       except IOError, e:	
          log.error("%s",e)
-         if e.errno == 101:
-            log.warning("Trying to connect on the next cycle")
-            self.state = NOT_CONNECTED
+         if e.errno == 101 or e.errno == -2:
+            self.handleConnErrors()
          else:
             self.state = FAILED
             raise
 
+   def handleConnErrors(self):
+      log.warning("Trying to connect on the next cycle")
+      self.state = NOT_CONNECTED
