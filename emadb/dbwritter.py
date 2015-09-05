@@ -33,6 +33,7 @@ import re
 import os
 import datetime
 import operator
+import math
 
 from server import Lazy, Server
 
@@ -63,6 +64,26 @@ log = logging.getLogger('dbwritter')
 
 DATABASE_LOCKED = "database is locked"
 
+UNKNOWN_STATION_ID = -1
+UNKNOWN_MEAS_ID    = -1
+UNKNOWN_UNITS_ID   = -1
+UNKNOWN_DATE_ID    = -1
+UNKNOWN_TIME_ID    = -1
+
+TYP_SAMPLES = 'Samples'
+TYP_MIN     = 'Minima'
+TYP_MAX     = 'Maxima'
+TYP_UNK     = 'Unknown'
+
+RLY_OPEN   = 'Open'
+RLY_CLOSED = 'Closed'
+
+K_INV_LOG10_2_5 = math.log10(2.5)
+K_INV_230       = (1/230.0)*0.000001
+
+# When everithing goes wrong
+MAG_CLIP_VALUE = 24
+
 # ===============================
 # Extract and Transform Functions
 # ===============================
@@ -75,11 +96,6 @@ def xtDateTime(tstamp):
    time_id = ts.hour*100 + ts.minute
    date_id = ts.year*10000 + ts.month*100 + ts.day
    return date_id, time_id, ts
-
-TYP_SAMPLES = 'Samples'
-TYP_MIN     = 'Minima'
-TYP_MAX     = 'Maxima'
-TYP_UNK     = 'Unknown'
 
 def xtMeasType(message):
    '''Extract and transform Measurement Type'''
@@ -94,8 +110,6 @@ def xtMeasType(message):
       msgtype = TYP_UNK
    return msgtype
 
-RLY_OPEN   = 'Open'
-RLY_CLOSED = 'Closed'
 
 def xtRoofRelay(message):
    '''Extract and transform Roof Relay Status'''
@@ -141,12 +155,36 @@ def xtFrequency(message):
    mant = int(message[SPHB+1:SPHE])
    return mant*pow(10, exp)
 
+
+# --------------------------------------------------------------------
+# Visual magnitude computed by the following C function
+# --------------------------------------------------------------------
+# float HzToMag(float HzTSL ) 
+# {
+#  float mv;
+#     mv = HzTSL/230.0;             // Iradiancia en (uW/cm2)/10
+#     if (mv>0){
+#        mv = mv * 0.000001;       //irradiancia en W/cm2
+#        mv = -1*(log10(mv)/log10(2.5));    //log en base 2.5
+#        if (mv < 0) mv = 24;
+#     }
+#     else mv = 24;
+#
+#     return mv;
+#}
+# --------------------------------------------------------------------
+
 def xtMagVisual(message):
    '''Extract and Transform into Visual maginitued per arcsec 2'''
-   instrmag = xtFrequency(message)
-   # We need the formulae to compute visual magnitude from Hz
-   # For the time being, we return Hz.
-   return 0.0
+   freq = xtFrequency(message)
+   mv = freq * K_INV_230
+   if mv > 0.0:
+      mv = -1.0 * math.log10(mv) * K_INV_LOG10_2_5
+      mv = MAG_CLIP_VALUE if mv < 0.0 else mv
+   else:
+      mv = MAG_CLIP_VALUE
+   return mv
+
    
 def xtTemperature(message):
    '''Extract and transform Temperature'''
@@ -176,6 +214,7 @@ def xtWindDirection(message):
 # ===================
 # MinMaxHistory Class
 # ===================
+
 
 class MinMaxHistory(object):
 
@@ -259,10 +298,10 @@ class MinMaxHistory(object):
          xtAbsPressure(message),   # abs_pressure
          xtRain(message),          # rain
          xtIrradiation(message),   # irradiation
-         xtMagVisual(message),     # visual_magnitude
+         xtMagVisual(message),     # vis_magnitude
          xtFrequency(message),     # frequency
          xtTemperature(message),   # temperature
-         xtHumidity(message),      # humidity
+         xtHumidity(message),      # rel_humidity
          xtDewPoint(message),      # dew_point
          xtWindSpeed(message),     # wind_speed
          xtWindDirection(message), # wind_direction
@@ -349,10 +388,10 @@ class RealTimeSamples(object):
          xtAbsPressure(message),   # abs_pressure
          xtRain(message),          # rain
          xtIrradiation(message),   # irradiation
-         xtMagVisual(message),     # visual_magnitude
+         xtMagVisual(message),     # vis_magnitude
          xtFrequency(message),     # frequency
          xtTemperature(message),   # temperature
-         xtHumidity(message),      # humidity
+         xtHumidity(message),      # rel_humidity
          xtDewPoint(message),      # dew_point
          xtWindSpeed(message),     # wind_speed
          xtWindDirection(message), # wind_direction
@@ -548,7 +587,7 @@ class DBWritter(Lazy):
       '''return meas_id key from meas_type'''
       self.__cursor.execute("SELECT type_id FROM Type WHERE type=?",
                             (meas_type,))
-      meas_id = self.__cursor.fetchone() or (0,)
+      meas_id = self.__cursor.fetchone() or (UNKNOWN_MEAS_ID,)
       log.verbose("lkType(%s) => %s", meas_type, meas_id)
       return meas_id[0]
 
@@ -557,7 +596,7 @@ class DBWritter(Lazy):
       '''return station_id key from mqtt_id'''
       self.__cursor.execute("SELECT station_id FROM Station WHERE mqtt_id=?",
                             (mqtt_id,))
-      station_id = self.__cursor.fetchone() or (0,)
+      station_id = self.__cursor.fetchone() or (UNKNOWN_STATION_ID,)
       log.verbose("lkStation(%s) => %s", mqtt_id, station_id)
       return station_id[0]
 
@@ -566,7 +605,7 @@ class DBWritter(Lazy):
       '''return units_id key from units'''
       self.__cursor.execute("SELECT units_id FROM Units WHERE roof_relay=? AND aux_relay=?",
                             (roof, aux))
-      units_id = self.__cursor.fetchone() or (0,)
+      units_id = self.__cursor.fetchone() or (UNKNOWN_UNITS_ID,)
       log.verbose("lkUnits(roof=%s,aux=%s) => %s", roof, aux, units_id)
       return units_id[0]
 

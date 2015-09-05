@@ -18,11 +18,11 @@
 #    ], 
 # ----------------------------
 
-# station_id = 0 is reserved for the 'Unknown' station
+# station_id = -1 is reserved for the 'Unknown' station
 
 [
     [
-        0, 
+        -1, 
         "Unknown", 
         "Unknown", 
         "Unknown", 

@@ -11,16 +11,16 @@
 #            roof_relay              TEXT,
 #            aux_relay               TEXT,
 #            voltage                 TEXT,
-#            rain_probability        TEXT,
-#            clouds_level            TEXT,
+#            wet                     TEXT,
+#            cloudy                  TEXT,
 #            cal_pressure            TEXT,
 #            abs_pressure            TEXT,
 #            rain_level              TEXT,
-#            irradiantion            TEXT,
+#            irradiation             TEXT,
 #            visual_magnitude        TEXT,
-#            instrumental_magnitude  TEXT,
+#            frequency               TEXT,
 #            temperature             TEXT,
-#            relative_humidity       TEXT,
+#            rel_humidity            TEXT,
 #            dew_point               TEXT,
 #            wind_speed              TEXT,
 #            wind_direction          TEXT,
@@ -28,13 +28,55 @@
 #    ], 
 # ---------------------------------------------------------------------------
 
-# units_id = 0 is reserved
+# units_id = -1 is reserved
 
 [
 
     [  
-	1, 
+	-1, 
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown",
+	"Unknown"
+    ],
+
+    [  
+	0, 
 	"Closed",
+	"Closed",
+	"V",
+	"%",
+	"%",
+	"HPa",
+	"HPa",
+	"mm",
+	"%",
+	"Mv/arcsec^2",
+	"Hz",
+	"deg C",
+	"%",
+	"deg C",
+	"Km/h",
+	"degrees",
+	"sec"
+    ],
+
+    [  
+	1, 
+	"Open",
 	"Closed",
 	"V",
 	"%",
@@ -76,27 +118,6 @@
 
     [  
 	3, 
-	"Open",
-	"Closed",
-	"V",
-	"%",
-	"%",
-	"HPa",
-	"HPa",
-	"mm",
-	"%",
-	"Mv/arcsec^2",
-	"Hz",
-	"deg C",
-	"%",
-	"deg C",
-	"Km/h",
-	"degrees",
-	"sec"
-    ],
-
-    [  
-	4, 
 	"Open",
 	"Open",
 	"V",

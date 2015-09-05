@@ -3,30 +3,12 @@
   Averigaur que espera windows tras hacer pause para luego poder 
  hacer el continuar
 
-* Unknown Indes = -1 para todos. El 0 puede ser interesante
-
-* formula de la magnitud visual a partir de los Hz
-float HzToMag(float HzTSL ) //recibe Hz del sensor TSL y retorna magnitud visual
-{
-  float mv;
-     mv = HzTSL/230.0;             // Iradiancia en (uW/cm2)/10
-     if (mv>0){
-        mv = mv * 0.000001;       //irradiancia en W/cm2
-        mv = -1*(log10(mv)/log10(2.5));    //log en base 2.5
-        if (mv < 0) mv = 24;
-     }
-     else mv = 24;
-
-     return mv;
-}
-
 *Actualizar README.md partiendolo en 3
   INSTALL.md (instalacion y configuracion para todas las plaaformas)
   OPRATION.md (los distinos modos de arranque, el reload, pausar)
   DATA_MODEL.md (explicar el modelo de datos, el modielaod dimensional, las
 condiciones de captura de la EMA (periodo integracion 5seg), el grano de cada tabla y un ejemplo de queries
 
-* Noevo server method pause() y quitarlo del config file
 
 CONSULTAS
   - subdirectorio de queries 'sql/'

@@ -155,7 +155,7 @@ class Date(object):
         date = self.__start
         dateList = [
             (
-                0,
+                -1,
                 UNKNOWN,
                 UNKNOWN,
                 UNKNOWN,
@@ -381,11 +381,11 @@ class MeasurementType(object):
     def rows(self):
         '''Generate a list (Tuple) of rows to inject in SQLite API'''
         return (
-            ( 0, UNKNOWN   ),
-            ( 1, "Minima"  ),
-            ( 2, "Maxima"  ),
-            ( 3, "Samples" ),
-            ( 4, "Averages" ),
+            ( -1, UNKNOWN   ),
+            (  1, "Minima"  ),
+            (  2, "Maxima"  ),
+            (  3, "Samples" ),
+            (  4, "Averages" ),
         )
 
 # ============================================================================ #
@@ -425,11 +425,11 @@ class Units(object):
             cal_pressure       TEXT,
             abs_pressure       TEXT,
             rain               TEXT,
-            irradiantion       TEXT,
-            visual_magnitude   TEXT,
+            irradiation        TEXT,
+            vis_magnitude      TEXT,
             frequency          TEXT,
             temperature        TEXT,
-            relative_humidity  TEXT,
+            rel_humidity       TEXT,
             dew_point          TEXT,
             wind_speed         TEXT,
             wind_direction     TEXT,
@@ -496,11 +496,11 @@ class MinMaxHistory(object):
             cal_pressure       REAL,
             abs_pressure       REAL,
             rain               REAL,
-            irradiantion       REAL,
-            visual_magnitude   REAL,
+            irradiation        REAL,
+            vis_magnitude      REAL,
             frequency          REAL,
             temperature        REAL,
-            relative_humidity  REAL,
+            rel_humidity       REAL,
             dew_point          REAL,
             wind_speed         REAL,
             wind_direction     INTEGER,
@@ -545,11 +545,11 @@ class RealTimeSamples(object):
             cal_pressure       REAL,
             abs_pressure       REAL,
             rain               REAL,
-            irradiantion       REAL,
-            visual_magnitude   REAL,
+            irradiation        REAL,
+            vis_magnitude      REAL,
             frequency          REAL,
             temperature        REAL,
-            relative_humidity  REAL,
+            rel_humidity       REAL,
             dew_point          REAL,
             wind_speed         REAL,
             wind_direction     INTEGER,
