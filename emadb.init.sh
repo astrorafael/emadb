@@ -5,8 +5,8 @@
 # Required-Stop:     $remote_fs $syslog $network
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: EMA initscript
-# Description:       EMA weather station service
+# Short-Description: EMADB initscript
+# Description:       EMA weather station database service
 ### END INIT INFO
 
 
@@ -37,7 +37,7 @@ CONFIG_FILE=/etc/$NAME/config
 # and status_of_proc is working.
 . /lib/lsb/init-functions
 
-DAEMON_ARGS="-m emadb --config $CONFIG_FILE"
+DAEMON_ARGS="-m $NAME --config $CONFIG_FILE"
 
 #
 # Function that starts the daemon/service
