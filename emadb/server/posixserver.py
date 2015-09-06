@@ -61,6 +61,7 @@ import errno
 import signal
 import select
 import logging
+import datetime
 
 import logger
 
@@ -275,8 +276,9 @@ class Server(object):
 
       if not io_activity:                   
          # Execute alarms first
+         utcnow = datetime.datetime.utcnow()
          for alarm in self.__alobj:
-            if alarm.timeout():
+            if alarm.timeout(utcnow):
                self.delAlarmable(alarm)
                alarm.onTimeoutDo()
 
