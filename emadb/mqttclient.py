@@ -49,7 +49,3 @@ class MQTTClient(MQTTGenericSubscriber):
          self.srv.onStatusMessage(id, msg.payload, tstamp)
       else:
          log.warn("message received on unexpected topic %s", msg.topic)
-
-
-if __name__ == "__main__":
-      pass

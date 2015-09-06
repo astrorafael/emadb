@@ -37,7 +37,7 @@
 # ======================================================================
 
 import logging
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho
 import socket
 import datetime
 from   abc import ABCMeta, abstractmethod
@@ -62,43 +62,46 @@ log = logging.getLogger('mqtt')
 # Callback when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, rc):
    userdata.onConnect(flags, rc)
-
+   
 def on_disconnect(client, userdata, rc):
    userdata.onDisconnect(rc)
 
 # Callback when a PUBLISH message is received from the server.
 # The default message callback
 def on_message(client, userdata, msg):
-    userdata.onMessage(msg, datetime.datetime.utcnow())
+   userdata.onMessage(msg, datetime.datetime.utcnow())
 
 # Callback subscriptions
 def on_subscribe(client, userdata, mid, granted_qos):
-    userdata.onSubscribe(mid, granted_qos)
+   userdata.onSubscribe(mid, granted_qos)
 
 def on_unsubscribe(client, userdata, mid):
-    userdata.onUnsubscribe(mid)
+   userdata.onUnsubscribe(mid)
 
 class MQTTGenericSubscriber(Lazy):
 
+   # Maximun retry period
+   MAX_PERIOD = 2*60*60
+
    def __init__(self, srv, parser):
       Lazy.__init__(self, 60)
-      self.parser   = parser
+      self.__parser   = parser
       self.srv        = srv
-      self.state    = NOT_CONNECTED
-      self.topics   = []
+      self.__state    = NOT_CONNECTED
+      self.__topics   = []
       srv.addLazy(self)
       # We do not allow to reconfigure an existing connection
       # to a broker as we would loose incoming data
       self.id       = parser.get("MQTT", "mqtt_id")
-      self.host     = parser.get("MQTT", "mqtt_host")
-      self.port     = parser.getint("MQTT", "mqtt_port")
-      self.mqtt     = mqtt.Client(client_id=self.id+'@'+ socket.gethostname(), 
+      self.__host     = parser.get("MQTT", "mqtt_host")
+      self.__port     = parser.getint("MQTT", "mqtt_port")
+      self.paho      = paho.Client(client_id=self.id+'@'+ socket.gethostname(), 
                                   clean_session=False, userdata=self)
-      self.mqtt.on_connect     = on_connect
-      self.mqtt.on_disconnect  = on_disconnect
-      self.mqtt.on_message     = on_message
-      self.mqtt.on_subscribe   = on_subscribe
-      self.mqtt.on_unsubscribe = on_unsubscribe
+      self.paho.on_connect     = on_connect
+      self.paho.on_disconnect  = on_disconnect
+      self.paho.on_message     = on_message
+      self.paho.on_subscribe   = on_subscribe
+      self.paho.on_unsubscribe = on_unsubscribe
       self.reload()
       log.info("MQTT client created")
 
@@ -106,14 +109,16 @@ class MQTTGenericSubscriber(Lazy):
       # we only allow to reconfigure the topic list and keepalive period
    def reload(self):
       '''Reloads and reconfigures itself'''
-      parser = self.parser    # shortcut
+      parser = self.__parser    # shortcut
       lvl             = parser.get("MQTT", "mqtt_log")
       log.setLevel(lvl)
-      self.period   = parser.getint("MQTT", "mqtt_period")
-      self.setPeriod(self.period /  2 )
+      self.__keepalive  = parser.getint("MQTT", "mqtt_period")
+      self.__initial_T  = self.__keepalive / 2
+      self.__period     = self.__initial_T
+      self.setPeriod(self.__initial_T )
       topics          = utils.chop(parser.get("MQTT", "mqtt_topics"),',')
-      self.newtopics = [ (topic, QOS) for topic in topics ] 
-      if self.state == CONNECTED:
+      self.__newtopics = [ (topic, QOS) for topic in topics ]       
+      if self.__state == CONNECTED:
          self.subscribe()
       log.debug("Reload complete")
 
@@ -122,20 +127,21 @@ class MQTTGenericSubscriber(Lazy):
    # -----------------------------------------
 
    def onConnect(self, flags, rc):
-     '''Send the initial event and set last will on unexpected diconnection'''
-     if rc == 0:
-       self.state = CONNECTED
-       log.info("Connected successfully") 
-       self.subscribe()
-     else:
-       self.state = FAILED
-       log.error("Connection failed, rc =%d", rc)
+      '''Send the initial event and set last will on unexpected diconnection'''
+      if rc == 0:
+         self.__state = CONNECTED
+         self.__period = self.__initial_T
+         self.setPeriod(self.__initialT)
+         log.info("Connected successfully") 
+         self.subscribe()
+      else:
+         self.handleConnErrors()
 
 
    def onDisconnect(self, rc):
      log.warning("Unexpected disconnection, rc =%d", rc)
-     self.state  = NOT_CONNECTED
-     self.topics = []
+     self.__state  = NOT_CONNECTED
+     self.__topics = []
      try:
        self.srv.delReadable(self)
      except ValueError as e:
@@ -169,11 +175,11 @@ class MQTTGenericSubscriber(Lazy):
       Read from message buffer and notify handlers if message complete.
       Called from Server object
       '''
-      self.mqtt.loop_read()
+      self.paho.loop_read()
    
    def fileno(self):
       '''Implement this interface to be added in select() system call'''
-      return self.mqtt.socket().fileno()
+      return self.paho.socket().fileno()
 
 	
    # ----------------------------------------
@@ -188,10 +194,10 @@ class MQTTGenericSubscriber(Lazy):
       '''
       log.debug("work()")
 	 
-      if self.state == NOT_CONNECTED:
+      if self.__state == NOT_CONNECTED:
          self.connect()
       	 return
-      self.mqtt.loop_misc()
+      self.paho.loop_misc()
 
 
    # --------------
@@ -202,21 +208,21 @@ class MQTTGenericSubscriber(Lazy):
       '''Subscribe smartly to a list of topics'''
 
       # Unsubscribe first if necessary
-      topics = [ t[0] for t in (set(self.topics) - set(self.newtopics)) ]
+      topics = [ t[0] for t in (set(self.__topics) - set(self.__newtopics)) ]
       if len(topics):
-         self.mqtt.unsubscribe(topics)
+         self.paho.unsubscribe(topics)
          log.info("Unsubscribing from topics %s", topics)
       else:
          log.info("no need to unsubscribe")
 
       # Now subscribe
-      topics = [ t for t in (set(self.newtopics) - set(self.topics)) ]
+      topics = [ t for t in (set(self.__newtopics) - set(self.__topics)) ]
       if len(topics):
          log.info("Subscribing to topics %s", topics) 
-         self.mqtt.subscribe(topics)
+         self.paho.subscribe(topics)
       else:
          log.info("no need to subscribe")
-      self.topics = self.newtopics
+      self.__topics = self.__newtopics
 
 
    def connect(self):
@@ -225,18 +231,19 @@ class MQTTGenericSubscriber(Lazy):
       Add MQTT library to the (external) EMA I/O event loop. 
       '''
       try:
-         log.info("Connecting to MQTT Broker %s:%s", self.host, self.port)
-         self.state = CONNECTING
-         self.mqtt.connect(self.host, self.port, self.period)
+         log.info("Connecting to MQTT Broker %s:%s", self.__host, self.__port)
+         self.__state = CONNECTING
+         self.paho.connect(self.__host, self.__port, self.__keepalive)
          self.srv.addReadable(self)
-      except IOError, e:	
+      except IOError as e:	
          log.error("%s",e)
-         if e.errno == 101 or e.errno == -2:
-            self.handleConnErrors()
-         else:
-            self.state = FAILED
-            raise
+         self.handleConnErrors()
+
 
    def handleConnErrors(self):
-      log.warning("Trying to connect on the next cycle")
-      self.state = NOT_CONNECTED
+      self.__state = NOT_CONNECTED
+      self.__period *= 2
+      self.__period = min(self.__period, MQTTGenericSubscriber.MAX_PERIOD)
+      self.setPeriod(self.__period)
+      log.info("Connection failed, next try in %d sec.", self.__period)
+
