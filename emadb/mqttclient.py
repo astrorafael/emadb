@@ -30,7 +30,7 @@
 import logging
 log = logging.getLogger('mqtt')
 
-from mqttsubs import MQTTGenericSubscriber
+from mqttsubscriber import MQTTGenericSubscriber
 
 class MQTTClient(MQTTGenericSubscriber):
 

@@ -42,7 +42,7 @@ import socket
 import datetime
 from   abc import ABCMeta, abstractmethod
 
-from server import Lazy, Server
+from server import Lazy
 import utils
 
 # MQTT Connection Status
