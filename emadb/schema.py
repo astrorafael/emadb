@@ -386,6 +386,7 @@ class MeasurementType(object):
             (  2, "Maxima"  ),
             (  3, "Samples" ),
             (  4, "Averages" ),
+            (  5, "MinMax"  ),
         )
 
 # ============================================================================ #
@@ -561,6 +562,91 @@ class RealTimeSamples(object):
             """
         )
 
+# ============================================================================ #
+#                   AVERAGES HISTORY TABLE (PERIODIC SNAPSHOT FACT)
+# ============================================================================ #
+
+class AveragesHistory(object):
+    
+    def __init__(self, conn):
+        '''Create the SQLite AveragesHistory Table'''
+        self.__cursor  = conn.cursor()
+        self.__conn  = conn
+
+
+    def generate(self):
+        self.table()
+        self.__conn.commit()
+
+
+    def table(self):
+        '''Create the SQLite AveragesHistory table'''
+        log.info("Creating AveragesHistory Table if not exists")
+        self.__cursor.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS AveragesHistory
+            (
+            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
+            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
+            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
+            units_id           INTEGER NOT NULL REFERENCES Units(units_id),
+            voltage            REAL,
+            wet                REAL,
+            cloudy             REAL,
+            cal_pressure       REAL,
+            abs_pressure       REAL,
+            rain               REAL,
+            irradiation        REAL,
+            vis_magnitude      REAL,
+            frequency          REAL,
+            temperature        REAL,
+            rel_humidity       REAL,
+            dew_point          REAL,
+            wind_speed         REAL,
+            wind_direction     INTEGER,
+            timestamp          TEXT,
+            PRIMARY KEY (date_id, time_id, station_id)
+            );
+            """
+        )
+
+# ============================================================================ #
+#                  HISTORY STATS TABLE (TRANSACTION TYPE FACT)
+# ============================================================================ #
+
+class HistoryStats(object):
+    
+    def __init__(self, conn):
+        '''Create the SQLite HistoryStats Table'''
+        self.__cursor  = conn.cursor()
+        self.__conn  = conn
+
+
+    def generate(self):
+        self.table()
+        self.__conn.commit()
+
+
+    def table(self):
+        '''Create the SQLite HistoryStats table'''
+        log.info("Creating HistoryStats Table if not exists")
+        self.__cursor.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS HistoryStats
+            (
+            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
+            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
+            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
+            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
+            records_submitted  INTEGER,
+            records_committed  INTEGER,
+            timestamp          TEXT DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (date_id, time_id, station_id, type_id)
+            );
+            """
+        )
+
+
 
 def generate(connection, json_dir, date_fmt, year_start, year_end, 
              replace=False):
@@ -573,6 +659,8 @@ def generate(connection, json_dir, date_fmt, year_start, year_end,
     Units(connection,json_dir).generate(replace)
     MinMaxHistory(connection).generate()
     RealTimeSamples(connection).generate()
+    AveragesHistory(connection).generate()
+    HistoryStats(connection).generate()
 
 if __name__ == "__main__":
     from server import logger
