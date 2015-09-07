@@ -25,10 +25,11 @@ import os
 import os.path
 import sys
 
+from . import __version__
+
 # Default config constants for the EMA Client (command line interface)
 # and Server
-VERSION = '0.1.0'
-VERSION_STRING = "emadb/%s/Python %d.%d" % (VERSION, 
+VERSION_STRING = "emadb/%s/Python %d.%d" % (__version__, 
                                          sys.version_info.major, 
                                          sys.version_info.minor)
 
