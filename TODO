@@ -1,7 +1,5 @@
 * tabla de  messages cada 5 minutos, cuando tenga la manera de enviar
    esos datos desde la EMA
-* Tabla de estadisticas de transacciones de historicos
- - date, time, station, units, submitted, committed, tstamp
 
 *Actualizar README.md partiendolo en 3
   INSTALL.md (instalacion y configuracion para todas las plaaformas)

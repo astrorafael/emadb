@@ -131,7 +131,7 @@ class MQTTGenericSubscriber(Lazy):
       if rc == 0:
          self.__state = CONNECTED
          self.__period = self.__initial_T
-         self.setPeriod(self.__initialT)
+         self.setPeriod(self.__initial_T)
          log.info("Connected successfully") 
          self.subscribe()
       else:

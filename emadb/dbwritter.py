@@ -74,6 +74,8 @@ TYP_SAMPLES = 'Samples'
 TYP_MIN     = 'Minima'
 TYP_MAX     = 'Maxima'
 TYP_UNK     = 'Unknown'
+TYP_MINMAX  = "MinMax"
+TYP_AVER    = "Averages"
 
 RLY_OPEN   = 'Open'
 RLY_CLOSED = 'Closed'
@@ -88,14 +90,18 @@ MAG_CLIP_VALUE = 24
 # Extract and Transform Functions
 # ===============================
 
-def xtDateTime(tstamp):
-   '''Extract and transform Date & Time from (HH:MM:SS DD/MM/YYYY)'''
-   # Parse and perform rounding to the nearest minute
-   ts = datetime.datetime.strptime(tstamp, "(%H:%M:%S %d/%m/%Y)") 
+
+def roundDateTime(ts):
+   '''Round a timestamp to the nearest minute'''
    tsround = ts + datetime.timedelta(minutes=0.5)
    time_id = tsround.hour*100   + tsround.minute
    date_id = tsround.year*10000 + tsround.month*100 + tsround.day
    return date_id, time_id, ts
+
+def xtDateTime(tstamp):
+   '''Extract and transform Date & Time from (HH:MM:SS DD/MM/YYYY)'''
+   ts = datetime.datetime.strptime(tstamp, "(%H:%M:%S %d/%m/%Y)") 
+   return roundDateTime(ts)
 
 def xtMeasType(message):
    '''Extract and transform Measurement Type'''
@@ -282,8 +288,8 @@ class MinMaxHistory(object):
       '''Produces one minmax row to be inserted into the database'''
 
       # Get values from cache
-      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)), 0)
-      type_id  = self.__type.get(xtMeasType(message), 0)
+      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)), -11)
+      type_id  = self.__type.get(xtMeasType(message), -1)
 
       return (
          date_id,               # date_id
@@ -434,6 +440,70 @@ class RealTimeSamples(object):
       return  commited
 
 
+# ===================
+# HistoryStats Class
+# ===================
+
+
+class HistoryStats(object):
+
+   def __init__(self, paren):
+      self.__paren = paren
+
+   def reload(self, conn):            
+      '''Reconfigures itself after a reload'''
+      self.__conn     = conn
+      self.__cursor   = self.__conn.cursor()
+      paren = self.__paren      # shortcut
+      # Build type cache
+      self.__type = {
+         TYP_MINMAX: paren.lkType(TYP_MINMAX),
+         TYP_AVER:   paren.lkType(TYP_AVER),
+      }      
+
+
+   def insert(self, rows):
+      '''Update the HistoryStats Fact Table'''
+      log.debug("HistoryStats: updating table")
+      try:
+         self.__cursor.executemany(
+            "INSERT OR FAIL INTO HistoryStats VALUES(?,?,?,?,?,?,?)", 
+            rows)
+      except sqlite3.IntegrityError, e:
+         log.debug("HistoryStats: duplicate detected, probably a retained message")
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("HistoryStats: %d rows cound not be written: %s",
+                   len(rows),
+                   DATABASE_LOCKED
+                )
+      except sqlite3.Error, e:
+         log.error(e)
+         self.__conn.rollback()
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+
+
+   def rows(self, station_id, meastype, submitted, commited):
+      '''Produces one history stats record to be inserted into the database'''
+      # Get values from cache
+      type_id  = self.__type.get(meastype, -1)
+      date_id, time_id, ts = roundDateTime(datetime.datetime.utcnow())
+      timestamp = ts.strftime("%Y-%m-%d %H:%M:%S")
+      return (
+         (
+            date_id,               # date_id
+            time_id,               # time_id
+            station_id,            # station_id
+            type_id,               # type_id
+            submitted,             # submitted rows
+            commited,              # commited rows
+            timestamp,             # timestamp
+         ),
+      )
+
 
 # ==========
 # Main Class
@@ -453,6 +523,7 @@ class DBWritter(Lazy):
       self.__conn     = None
       self.minmax     = MinMaxHistory(self)
       self.realtime   = RealTimeSamples(self)
+      self.stats      = HistoryStats(self)
       srv.addLazy(self)
       self.reload()
       log.info("DBWritter object created")
@@ -504,6 +575,7 @@ class DBWritter(Lazy):
          raise
       self.minmax.reload(self.__conn)
       self.realtime.reload(self.__conn)
+      self.stats.reload(self.__conn)
       log.debug("Reload complete")
       
 
@@ -515,7 +587,7 @@ class DBWritter(Lazy):
       '''extract MinMax History data and load into its table'''
       log.debug("Received minmax message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
-      if station_id == 0:
+      if station_id == UNKNOWN_STATION_ID:
          log.warn("Ignoring minmax message from unregistered station %s", 
                   mqtt_id)
          return
@@ -535,7 +607,11 @@ class DBWritter(Lazy):
       # It seemd there is no need to sort the dates
       # non-overlapping data do get written anyway 
       #rows = sorted(rows, key=operator.itemgetter(0,1), reverse=True)
-      self.minmax.insert(rows)
+      commited = self.minmax.insert(rows)
+      # Insert record into the statistics table
+      self.stats.insert(
+         self.stats.rows(station_id, TYP_MINMAX, len(rows), commited)
+      )
 
 
    def processStatus(self, mqtt_id, payload, t1):
@@ -544,7 +620,7 @@ class DBWritter(Lazy):
       '''
       t2 = datetime.datetime.utcnow()
       station_id = self.lkStation(mqtt_id)
-      if station_id == 0:
+      if station_id == UNKNOWN_STATION_ID:
          log.warn("Ignoring status message from unregistered station %s", 
                   mqtt_id)
          return
@@ -556,7 +632,7 @@ class DBWritter(Lazy):
       lag1 = int(round((t1 - t0).total_seconds()))
       lag2 = int(round((t2 - t0).total_seconds()))
       tstamp = t0.strftime("%Y-%m-%d %H:%M:%S")
-      log.debug("Received status message from station %s (lag1 = %d) (lag2 = %d",
+      log.debug("Received status message from station %s (lag1 = %d) (lag2 = %d)",
                 mqtt_id, lag1, lag2)
       row = self.realtime.row(date_id, time_id, station_id, 
                               tstamp, lag1, lag2, message[0])
