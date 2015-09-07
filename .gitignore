@@ -1,6 +1,8 @@
-EMADB.egg-info/
+*.egg-info/
 build
 dist
+*.pyc
+*.pyo
 emadb/*.pyc
 emadb/*.pyo
 emadb/*~
