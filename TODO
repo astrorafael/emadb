@@ -9,6 +9,7 @@
   DATA_MODEL.md (explicar el modelo de datos, el modielaod dimensional, las
 condiciones de captura de la EMA (periodo integracion 5seg), el grano de cada tabla y un ejemplo de queries
 
+* add versioneer al proyecto https://github.com/warner/python-versioneer
 
 CONSULTAS
   - crear dos views de volcado de todo con o sin unidades
