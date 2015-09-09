@@ -60,6 +60,8 @@ from emaproto  import SPSB, SPSE
 # Message Types
 from emaproto  import SMTB, SMTE, MTCUR, MTHIS, MTISO, MTMIN, MTMAX
 
+from emaproto import STRFTIME, magnitude, decodeFreq
+
 log = logging.getLogger('dbwritter')
 
 DATABASE_LOCKED = "database is locked"
@@ -80,12 +82,6 @@ TYP_AVER    = "Averages"
 RLY_OPEN   = 'Open'
 RLY_CLOSED = 'Closed'
 
-K_INV_LOG10_2_5 = 1.0/math.log10(2.5)
-K_INV_230E6     = (1.0/230000000)
-
-# When everithing goes wrong
-MAG_CLIP_VALUE = 24
-
 # ===============================
 # Extract and Transform Functions
 # ===============================
@@ -100,7 +96,7 @@ def roundDateTime(ts):
 
 def xtDateTime(tstamp):
    '''Extract and transform Date & Time from (HH:MM:SS DD/MM/YYYY)'''
-   ts = datetime.datetime.strptime(tstamp, "(%H:%M:%S %d/%m/%Y)") 
+   ts = datetime.datetime.strptime(tstamp, STRFTIME) 
    return roundDateTime(ts)
 
 def xtMeasType(message):
@@ -156,40 +152,13 @@ def xtIrradiation(message):
    return float(message[SPYB:SPYE]) / 10
 
 def xtFrequency(message):
-   '''Extract and Transform into Instrumental Magnitude in Hz'''
-   exp  = int(message[SPHB]) - 3      
-   mant = int(message[SPHB+1:SPHE])
-   return mant*pow(10, exp)
-
-
-# --------------------------------------------------------------------
-# Visual magnitude computed by the following C function
-# --------------------------------------------------------------------
-# float HzToMag(float HzTSL ) 
-# {
-#  float mv;
-#     mv = HzTSL/230.0;             // Iradiancia en (uW/cm2)/10
-#     if (mv>0){
-#        mv = mv * 0.000001;       //irradiancia en W/cm2
-#        mv = -1*(log10(mv)/log10(2.5));    //log en base 2.5
-#        if (mv < 0) mv = 24;
-#     }
-#     else mv = 24;
-#
-#     return mv;
-#}
-# --------------------------------------------------------------------
+   '''Extracts Frequency information'''
+   return decodeFreq(message[SPHB:SPHE])
 
 def xtMagVisual(message):
    '''Extract and Transform into Visual maginitued per arcsec 2'''
-   freq = xtFrequency(message)
-   mv = freq * K_INV_230E6
-   if mv > 0.0:
-      mv = -1.0 * math.log10(mv) * K_INV_LOG10_2_5
-      mv = MAG_CLIP_VALUE if mv < 0.0 else mv
-   else:
-      mv = MAG_CLIP_VALUE
-   return round(mv,2)
+   return magnitude(xtFrequency(message))
+
 
    
 def xtTemperature(message):
