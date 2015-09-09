@@ -584,7 +584,9 @@ class DBWritter(Lazy):
       year_start  = parser.getint("DBASE", "dbase_year_start")
       year_end    = parser.getint("DBASE", "dbase_year_end")
       purge_flag  = parser.getboolean("DBASE", "dbase_purge")
+      stats_flag  = parser.getboolean("DBASE", "dbase_stats")
       self.__purge = purge_flag
+      self.__stats = stats_flag
       log.setLevel(lvl)
       self.period = period
       self.setPeriod(60*period)
@@ -657,10 +659,11 @@ class DBWritter(Lazy):
       # non-overlapping data do get written anyway 
       #rows = sorted(rows, key=operator.itemgetter(0,1), reverse=True)
       commited = self.minmax.insert(rows)
-      # Insert record into the statistics table
-      self.histats.insert(
-         self.histats.rows(station_id, TYP_MINMAX, len(rows), commited)
-      )
+      if self.__stats:
+         # Insert record into the statistics table
+         self.histats.insert(
+            self.histats.rows(station_id, TYP_MINMAX, len(rows), commited)
+         )
 
 
    # -------------------------------
@@ -695,16 +698,15 @@ class DBWritter(Lazy):
       # Compute and store statistics
       # lag = measured lag MQTT[local] -  RPi[remote]
       # the timestamp reference is RPi[remote]
-
-      lag  = int(round((t1 - t0).total_seconds()))
-      nbytes = len(payload)
-      num_samples = 1
-      window_size = 0           # by definition (1 sample)
-
-      self.rtstats.insert(
-         self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
-                           window_size, num_samples, nbytes, lag)
-      )
+      if self.__stats:
+         lag  = int(round((t1 - t0).total_seconds()))
+         nbytes = len(payload)
+         num_samples = 1
+         window_size = 0           # by definition (1 sample)
+         self.rtstats.insert(
+            self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
+                              window_size, num_samples, nbytes, lag)
+         )
 
 
    # -------------------------------
@@ -739,17 +741,16 @@ class DBWritter(Lazy):
       # Compute and store statistics
       # lag = measured lag MQTT[local] -  RPi[remote]
       # the timestamp reference is RPi[remote]
-
-      _, _, tOldest = xtDateTime(message[2])
-      num_samples = int(message[3][1:-1])
-      lag  = int(round((t1 - t0).total_seconds()))
-      nbytes = len(payload)
-      window_size = (t0 - tOldest).total_seconds()
-
-      self.rtstats.insert(
-         self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
-                           window_size, num_samples, nbytes, lag)
-      )
+      if self.__stats:
+         _, _, tOldest = xtDateTime(message[2])
+         num_samples = int(message[3][1:-1])
+         lag  = int(round((t1 - t0).total_seconds()))
+         nbytes = len(payload)
+         window_size = (t0 - tOldest).total_seconds()
+         self.rtstats.insert(
+            self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
+                              window_size, num_samples, nbytes, lag)
+         )
 
 
    # ---------------------------------
