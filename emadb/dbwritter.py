@@ -479,6 +479,75 @@ class HistoryStats(object):
       )
 
 
+
+
+# ===================
+# RealTimeStats Class
+# ===================
+
+
+class RealTimeStats(object):
+
+   def __init__(self, paren):
+      self.__paren = paren
+
+   def reload(self, conn):            
+      '''Reconfigures itself after a reload'''
+      self.__conn     = conn
+      self.__cursor   = self.__conn.cursor()
+      paren = self.__paren      # shortcut
+      # Build type cache
+      self.__type = {
+         TYP_SAMPLES: paren.lkType(TYP_SAMPLES),
+         TYP_AVER:    paren.lkType(TYP_AVER),
+      }      
+
+
+   def insert(self, rows):
+      '''Update the RealTimeStats Fact Table'''
+      log.debug("RealTimeStats: updating table")
+      try:
+         self.__cursor.executemany(
+            "INSERT OR FAIL INTO RealTimeStats VALUES(?,?,?,?,?,?,?,?,?)", 
+            rows)
+      except sqlite3.IntegrityError, e:
+         log.debug("RealTimeStats: duplicate detected")
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("RealTimeStats: %d rows cound not be written: %s",
+                   len(rows),
+                   DATABASE_LOCKED
+                )
+      except sqlite3.Error, e:
+         log.error(e)
+         self.__conn.rollback()
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+
+
+   def rows(self, date_id, time_id, station_id, meas_type, tstamp, 
+            window_size, nsamples, num_bytes, lag):
+      '''Produces one history stats record to be inserted into the database'''
+      # Get values from cache
+      type_id  = self.__type.get(meas_type, -1)
+      return (
+         (
+            date_id,               # date_id
+            time_id,               # time_id
+            station_id,            # station_id
+            type_id,               # type_id
+            tstamp,                # timestamp
+            window_size,           # window_size
+            nsamples,              # num_samples
+            num_bytes,             # num_bytes
+            lag,                   # lag
+         ),
+      )
+
+
+
 # ==========
 # Main Class
 # ==========
@@ -497,7 +566,8 @@ class DBWritter(Lazy):
       self.__conn     = None
       self.minmax     = MinMaxHistory(self)
       self.realtime   = RealTimeSamples(self)
-      self.stats      = HistoryStats(self)
+      self.histats    = HistoryStats(self)
+      self.rtstats    = RealTimeStats(self)
       srv.addLazy(self)
       self.reload()
       log.info("DBWritter object created")
@@ -549,13 +619,18 @@ class DBWritter(Lazy):
          raise
       self.minmax.reload(self.__conn)
       self.realtime.reload(self.__conn)
-      self.stats.reload(self.__conn)
+      self.histats.reload(self.__conn)
+      self.rtstats.reload(self.__conn)
       log.debug("Reload complete")
       
 
-   # -----------
+   # =======
    # ETL API
-   # -----------
+   # =======
+
+   # -------------------------------
+   # Process Hourly MinMax bulk dump
+   # -------------------------------
 
    def processMinMax(self, mqtt_id, payload):
       '''extract MinMax History data and load into its table'''
@@ -583,17 +658,19 @@ class DBWritter(Lazy):
       #rows = sorted(rows, key=operator.itemgetter(0,1), reverse=True)
       commited = self.minmax.insert(rows)
       # Insert record into the statistics table
-      self.stats.insert(
-         self.stats.rows(station_id, TYP_MINMAX, len(rows), commited)
+      self.histats.insert(
+         self.histats.rows(station_id, TYP_MINMAX, len(rows), commited)
       )
 
 
+   # -------------------------------
+   # Process Current Status Messages
+   # -------------------------------
 
    def processCurrentStatus(self, mqtt_id, payload, t1):
       '''Extract real time EMA status message and store it into its table
       t1 is the tiemstamp at the mqtt reception.
       '''
-      t2 = datetime.datetime.utcnow()
       station_id = self.lkStation(mqtt_id)
       if station_id == UNKNOWN_STATION_ID:
          log.warn("Ignoring status message from unregistered station %s", 
@@ -601,25 +678,38 @@ class DBWritter(Lazy):
          return
       message = payload.split('\n')
       if len(message) != 2:
-         log.error("Wrong status message from station %s", mqtt_id)
+         log.error("Wrong current status message from station %s", mqtt_id)
          return
       date_id, time_id, t0 = xtDateTime(message[1])
 
-      # lag1 = measured lag MQTT[local] -  RPi[remote]
-      # lag2 = measured lag DBase[local] - RPi[remote]
-      # the timestamp reference is RPi[remote]
-
-      lag1 = int(round((t1 - t0).total_seconds()))
-      lag2 = int(round((t2 - t0).total_seconds()))
       tstamp = t0.strftime("%Y-%m-%d %H:%M:%S")
-      log.debug("Received status message from station %s (lag1 = %d) (lag2 = %d)", mqtt_id, lag1, lag2)
+      log.debug("Received current status message from station %s", mqtt_id)
 
       type_m = TYP_SAMPLES
-      row = self.realtime.row(date_id, time_id, station_id, type_m, tstamp, message[0])
+      row = self.realtime.row(date_id, time_id, station_id, type_m, tstamp, 
+                              message[0])
       self.__rtwrites += self.realtime.insert((row,))
       if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
          log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)
 
+      # Compute and store statistics
+      # lag = measured lag MQTT[local] -  RPi[remote]
+      # the timestamp reference is RPi[remote]
+
+      lag  = int(round((t1 - t0).total_seconds()))
+      nbytes = len(payload)
+      num_samples = 1
+      window_size = 0           # by definition (1 sample)
+
+      self.rtstats.insert(
+         self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
+                           window_size, num_samples, nbytes, lag)
+      )
+
+
+   # ---------------------------------
+   # Process 5 min. averaged Bulk Dump
+   # ----------------------------------
 
    def processSamples(self, mqtt_id, payload):
       log.debug("Received samples message from station %s", mqtt_id)

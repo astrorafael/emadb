@@ -646,7 +646,7 @@ class HistoryStats(object):
         )
 
 # ============================================================================ #
-#                   REAL TIME PERFORMANCE (PERIODIC SNAPSHOT FACT)
+#                   REAL TIME STATISTICS (PERIODIC SNAPSHOT FACT)
 # ============================================================================ #
 
 class RealTimeStats(object):
@@ -674,12 +674,10 @@ class RealTimeStats(object):
             station_id         INTEGER NOT NULL REFERENCES Station(station_id),
             type_id            INTEGER NOT NULL REFERENCES Type(type_id),
             timestamp          TEXT,
-            timestamp_oldest   TEXT,
+            window_size        INTEGER,
             num_samples        INTEGER,
-            num_actual_samples INTEGER,
             num_bytes          INTEGER,
-            lag1               INTEGER,
-            lag2               INTEGER,
+            lag                INTEGER,
             PRIMARY KEY (date_id, time_id, station_id, type_id)
             );
             """
