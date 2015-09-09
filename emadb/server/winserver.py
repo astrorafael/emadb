@@ -58,6 +58,7 @@ import os
 import errno
 import select
 import logging
+import datetime
 
 import win32api
 import win32con
