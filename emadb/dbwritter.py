@@ -350,19 +350,19 @@ class RealTimeSamples(object):
       return  commited
 
 
-   def row(self, date_id, time_id, station_id, type_m, tstamp, message):
+   def row(self, date_id, time_id, station_id, meas_type, tstamp, message):
       '''Produces one real time row to be inserted into the database'''
 
       # get units from cache
       units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)),-1)
+      type_id = self.__type.get(meas_type, -1)
 
-      type_id = self.__type.get(type_m, -1)
       return (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
-         units_id,              # units_id
          type_id,               # type_id
+         units_id,              # units_id
          xtVoltage(message),    # voltage
          xtWetLevel(message),   # wet
          xtCloudLevel(message), # cloudy
