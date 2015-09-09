@@ -307,6 +307,11 @@ class RealTimeSamples(object):
          (RLY_OPEN,RLY_CLOSED):   paren.lkUnits(roof=RLY_OPEN, aux=RLY_CLOSED),
          (RLY_OPEN,RLY_OPEN):     paren.lkUnits(roof=RLY_OPEN, aux=RLY_OPEN),
       }
+      # Build type cache
+      self.__type = {
+         TYP_SAMPLES: paren.lkType(TYP_SAMPLES),
+         TYP_AVER:    paren.lkType(TYP_AVER),
+      }      
 
 
    def rowcount(self):
@@ -320,7 +325,7 @@ class RealTimeSamples(object):
       log.debug("RealTimeSamples: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.warn("RealTimeSamples: overlapping rows")
@@ -345,17 +350,19 @@ class RealTimeSamples(object):
       return  commited
 
 
-   def row(self, date_id, time_id, station_id, tstamp, lag1, lag2, message):
+   def row(self, date_id, time_id, station_id, type_m, tstamp, message):
       '''Produces one real time row to be inserted into the database'''
 
       # get units from cache
-      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)),0 )
+      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)),-1)
 
+      type_id = self.__type.get(type_m, -1)
       return (
          date_id,               # date_id
          time_id,               # time_id
          station_id,            # station_id
          units_id,              # units_id
+         type_id,               # type_id
          xtVoltage(message),    # voltage
          xtWetLevel(message),   # wet
          xtCloudLevel(message), # cloudy
@@ -371,8 +378,6 @@ class RealTimeSamples(object):
          xtWindSpeed(message),     # wind_speed
          xtWindDirection(message), # wind_direction
          tstamp,                   # timestamp
-         lag1,                     # lag1 = MQTT[local] -  RPi[remote]
-         lag2,                     # lag2 = DBase[local] - RPi[remote]
       )
 
 
@@ -583,7 +588,8 @@ class DBWritter(Lazy):
       )
 
 
-   def processStatus(self, mqtt_id, payload, t1):
+
+   def processCurrentStatus(self, mqtt_id, payload, t1):
       '''Extract real time EMA status message and store it into its table
       t1 is the tiemstamp at the mqtt reception.
       '''
@@ -598,13 +604,18 @@ class DBWritter(Lazy):
          log.error("Wrong status message from station %s", mqtt_id)
          return
       date_id, time_id, t0 = xtDateTime(message[1])
+
+      # lag1 = measured lag MQTT[local] -  RPi[remote]
+      # lag2 = measured lag DBase[local] - RPi[remote]
+      # the timestamp reference is RPi[remote]
+
       lag1 = int(round((t1 - t0).total_seconds()))
       lag2 = int(round((t2 - t0).total_seconds()))
       tstamp = t0.strftime("%Y-%m-%d %H:%M:%S")
-      log.debug("Received status message from station %s (lag1 = %d) (lag2 = %d)",
-                mqtt_id, lag1, lag2)
-      row = self.realtime.row(date_id, time_id, station_id, 
-                              tstamp, lag1, lag2, message[0])
+      log.debug("Received status message from station %s (lag1 = %d) (lag2 = %d)", mqtt_id, lag1, lag2)
+
+      type_m = TYP_SAMPLES
+      row = self.realtime.row(date_id, time_id, station_id, type_m, tstamp, message[0])
       self.__rtwrites += self.realtime.insert((row,))
       if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
          log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)

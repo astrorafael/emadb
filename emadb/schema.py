@@ -539,6 +539,7 @@ class RealTimeSamples(object):
             date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
             time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
             station_id         INTEGER NOT NULL REFERENCES Station(station_id),
+            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
             units_id           INTEGER NOT NULL REFERENCES Units(units_id),
             voltage            REAL,
             wet                REAL,
@@ -555,9 +556,7 @@ class RealTimeSamples(object):
             wind_speed         REAL,
             wind_direction     INTEGER,
             timestamp          TEXT,
-            lag1               INTEGER,
-            lag2               INTEGER,
-            PRIMARY KEY (date_id, time_id, station_id)
+            PRIMARY KEY (date_id, time_id, station_id, type_id)
             );
             """
         )
@@ -646,6 +645,45 @@ class HistoryStats(object):
             """
         )
 
+# ============================================================================ #
+#                   REAL TIME PERFORMANCE (PERIODIC SNAPSHOT FACT)
+# ============================================================================ #
+
+class RealTimeStats(object):
+    
+    def __init__(self, conn):
+        '''Create the SQLite RealTimeStats Table'''
+        self.__cursor  = conn.cursor()
+        self.__conn  = conn
+
+
+    def generate(self):
+        self.table()
+        self.__conn.commit()
+
+
+    def table(self):
+        '''Create the SQLite RealTimeStats table'''
+        log.info("Creating RealTimeStats Table if not exists")
+        self.__cursor.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS RealTimeStats
+            (
+            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
+            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
+            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
+            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
+            timestamp          TEXT,
+            timestamp_oldest   TEXT,
+            num_samples        INTEGER,
+            num_actual_samples INTEGER,
+            num_bytes          INTEGER,
+            lag1               INTEGER,
+            lag2               INTEGER,
+            PRIMARY KEY (date_id, time_id, station_id, type_id)
+            );
+            """
+        )
 
 
 def generate(connection, json_dir, date_fmt, year_start, year_end, 
@@ -661,6 +699,7 @@ def generate(connection, json_dir, date_fmt, year_start, year_end,
     RealTimeSamples(connection).generate()
     AveragesHistory(connection).generate()
     HistoryStats(connection).generate()
+    RealTimeStats(connection).generate()
 
 if __name__ == "__main__":
     from server import logger

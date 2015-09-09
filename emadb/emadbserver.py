@@ -133,7 +133,7 @@ class EMADBServer(Server):
             self.dbwritter.processMinMax(item[0], item[1])
         while len(self.__queue['status']):
             item = self.__queue['status'].pop(0)
-            self.dbwritter.processStatus(item[0], item[1], item[2])
+            self.dbwritter.processCurrentStatus(item[0], item[1], item[2])
         while len(self.__queue['samples']):
             item = self.__queue['samples'].pop(0)
             self.dbwritter.processSamples(item[0], item[1])
@@ -148,7 +148,7 @@ class EMADBServer(Server):
             item = self.__queue['minmax'].pop(0)
             self.dbwritter.processMinMax(item[0], item[1])
 
-    def onStatusMessage(self, mqtt_id, payload, recv_tstamp):
+    def onCurrentStatusMessage(self, mqtt_id, payload, recv_tstamp):
         self.__queue['status'].append((mqtt_id, payload, recv_tstamp))
         if self.paused:
             log.warning("Holding %d status messages on queue",
@@ -156,7 +156,7 @@ class EMADBServer(Server):
             return
         while len(self.__queue['status']):
             item = self.__queue['status'].pop(0)
-            self.dbwritter.processStatus(item[0], item[1], item[2])
+            self.dbwritter.processCurrentStatus(item[0], item[1], item[2])
 
     def onSamplesMessage(self, mqtt_id, payload):
         self.__queue['samples'].append((mqtt_id, payload))
