@@ -47,5 +47,7 @@ class MQTTClient(MQTTGenericSubscriber):
          self.srv.onSamplesMessage(id, msg.payload)
       elif msg.topic.endswith("current/status"):
          self.srv.onCurrentStatusMessage(id, msg.payload, tstamp)
+      elif msg.topic.endswith("average/status"):
+         self.srv.onAverageStatusMessage(id, msg.payload, tstamp)
       else:
          log.warn("message received on unexpected topic %s", msg.topic)

@@ -669,7 +669,7 @@ class DBWritter(Lazy):
 
    def processCurrentStatus(self, mqtt_id, payload, t1):
       '''Extract real time EMA status message and store it into its table
-      t1 is the tiemstamp at the mqtt reception.
+      t1 is the timestamp at the mqtt on_message callback.
       '''
       station_id = self.lkStation(mqtt_id)
       if station_id == UNKNOWN_STATION_ID:
@@ -707,12 +707,57 @@ class DBWritter(Lazy):
       )
 
 
+   # -------------------------------
+   # Process Average Status Messages
+   # -------------------------------
+
+   def processAverageStatus(self, mqtt_id, payload, t1):
+      '''Extract real time EMA status message and store it into its table
+      t1 is the timestamp at the mqtt on_message callback.
+      '''
+      station_id = self.lkStation(mqtt_id)
+      if station_id == UNKNOWN_STATION_ID:
+         log.warn("Ignoring status message from unregistered station %s", 
+                  mqtt_id)
+         return
+      message = payload.split('\n')
+      if len(message) != 4:
+         log.error("Wrong average status message from station %s", mqtt_id)
+         return
+      date_id, time_id, t0 = xtDateTime(message[1])
+
+      tstamp = t0.strftime("%Y-%m-%d %H:%M:%S")
+      log.debug("Received average status message from station %s", mqtt_id)
+
+      type_m = TYP_AVER
+      row = self.realtime.row(date_id, time_id, station_id, type_m, tstamp, 
+                              message[0])
+      self.__rtwrites += self.realtime.insert((row,))
+      if (self.__rtwrites % DBWritter.N_RT_WRITES) == 1:
+         log.info("RealTimeSamples rows written so far: %d" % self.__rtwrites)
+
+      # Compute and store statistics
+      # lag = measured lag MQTT[local] -  RPi[remote]
+      # the timestamp reference is RPi[remote]
+
+      _, _, tOldest = xtDateTime(message[2])
+      num_samples = int(message[3][1:-1])
+      lag  = int(round((t1 - t0).total_seconds()))
+      nbytes = len(payload)
+      window_size = (t0 - tOldest).total_seconds()
+
+      self.rtstats.insert(
+         self.rtstats.rows(date_id, time_id, station_id, type_m, tstamp, 
+                           window_size, num_samples, nbytes, lag)
+      )
+
+
    # ---------------------------------
    # Process 5 min. averaged Bulk Dump
    # ----------------------------------
 
-   def processSamples(self, mqtt_id, payload):
-      log.debug("Received samples message from station %s", mqtt_id)
+   def processAverages(self, mqtt_id, payload):
+      log.debug("Received averages message from station %s", mqtt_id)
 
 
    # ----------------------------

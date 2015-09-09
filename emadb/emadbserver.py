@@ -52,8 +52,9 @@ class EMADBServer(Server):
         server.Server.__init__(self, **kargs)
         self.__queue = {
             'minmax':  [] ,
-            'status':  [] ,
-            'samples': [] ,
+            'curstat':  [] ,
+            'avestat':  [] ,
+            'averages': [] ,
         }
         self.__parser = ConfigParser.ConfigParser()
         self.__parser.optionxform = str
@@ -131,11 +132,14 @@ class EMADBServer(Server):
         while len(self.__queue['minmax']):
             item = self.__queue['minmax'].pop(0)
             self.dbwritter.processMinMax(item[0], item[1])
-        while len(self.__queue['status']):
-            item = self.__queue['status'].pop(0)
+        while len(self.__queue['curstat']):
+            item = self.__queue['curstat'].pop(0)
             self.dbwritter.processCurrentStatus(item[0], item[1], item[2])
-        while len(self.__queue['samples']):
-            item = self.__queue['samples'].pop(0)
+        while len(self.__queue['avestat']):
+            item = self.__queue['avestat'].pop(0)
+            self.dbwritter.processAverageStatus(item[0], item[1], item[2])
+        while len(self.__queue['averages']):
+            item = self.__queue['averages'].pop(0)
             self.dbwritter.processSamples(item[0], item[1])
 
     def onMinMaxMessage(self, mqtt_id, payload):
@@ -149,23 +153,33 @@ class EMADBServer(Server):
             self.dbwritter.processMinMax(item[0], item[1])
 
     def onCurrentStatusMessage(self, mqtt_id, payload, recv_tstamp):
-        self.__queue['status'].append((mqtt_id, payload, recv_tstamp))
+        self.__queue['curstat'].append((mqtt_id, payload, recv_tstamp))
         if self.paused:
-            log.warning("Holding %d status messages on queue",
-                        len(self.__queue['status']))
+            log.warning("Holding %d current status messages on queue",
+                        len(self.__queue['curstat']))
             return
-        while len(self.__queue['status']):
-            item = self.__queue['status'].pop(0)
+        while len(self.__queue['curstat']):
+            item = self.__queue['curstat'].pop(0)
             self.dbwritter.processCurrentStatus(item[0], item[1], item[2])
 
-    def onSamplesMessage(self, mqtt_id, payload):
-        self.__queue['samples'].append((mqtt_id, payload))
+    def onAverageStatusMessage(self, mqtt_id, payload, recv_tstamp):
+        self.__queue['avestat'].append((mqtt_id, payload, recv_tstamp))
         if self.paused:
-            log.warning("Holding %d sample messages on queue", 
-                        len(self._queue['samples']))
+            log.warning("Holding %d average status messages on queue",
+                        len(self.__queue['avestat']))
             return
-        while len(self.__queue['samples']):
-            item = self.__queue['samples'].pop(0)
+        while len(self.__queue['avestat']):
+            item = self.__queue['avestat'].pop(0)
+            self.dbwritter.processAverageStatus(item[0], item[1], item[2])
+
+    def onAveragesMessage(self, mqtt_id, payload):
+        self.__queue['averages'].append((mqtt_id, payload))
+        if self.paused:
+            log.warning("Holding %d averages messages on queue", 
+                        len(self._queue['averages']))
+            return
+        while len(self.__queue['averages']):
+            item = self.__queue['averages'].pop(0)
             self.dbwritter.processSamples(item[0], item[1])
                 
     # --------------
