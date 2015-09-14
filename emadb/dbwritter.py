@@ -476,14 +476,6 @@ class RealTimeSamples(object):
       )
 
 
-   def purge(self):
-      '''Purges database'''
-      now = datetime.datetime.utcnow()
-      midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
-      delta = datetime.timedelta(minutes=2*self.__paren.period)
-      if now - midnight < delta:
-         self.delete(now.year*10000 + now.month*100 +now.day)
-
    def delete(self, date_id):
       '''Delete samples older than a given date_id'''
       log.debug("Delete RealTimeSamples Table data older than %d", date_id)
@@ -494,9 +486,7 @@ class RealTimeSamples(object):
          self.__conn.rollback()
          if e.args[0] != DATABASE_LOCKED:
             raise
-         log.error("Table coud not be purged: %s",
-                   DATABASE_LOCKED
-                )
+         log.error("Table could not be purged: %s",DATABASE_LOCKED)
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
@@ -545,9 +535,7 @@ class HistoryStats(object):
          if e.args[0] != DATABASE_LOCKED:
             raise
          log.critical("HistoryStats: %d rows cound not be written: %s",
-                   len(rows),
-                   DATABASE_LOCKED
-                )
+                   len(rows),DATABASE_LOCKED)
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
@@ -612,9 +600,7 @@ class RealTimeStats(object):
          if e.args[0] != DATABASE_LOCKED:
             raise
          log.critical("RealTimeStats: %d rows cound not be written: %s",
-                   len(rows),
-                   DATABASE_LOCKED
-                )
+                   len(rows), DATABASE_LOCKED)
       except sqlite3.Error, e:
          log.error(e)
          self.__conn.rollback()
@@ -641,7 +627,27 @@ class RealTimeStats(object):
          ),
       )
 
-
+   def delete(self, date_id):
+      '''Delete samples older than a given date_id'''
+      log.debug("Delete RealTimeStats Table data older than %d", date_id)
+      try:
+         self.__cursor.execute(
+            "DELETE FROM RealTimeStats WHERE date_id < ?", (date_id,))
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.error("Table could not be purged: %s",DATABASE_LOCKED)
+      except sqlite3.Error, e:
+         log.error(e)
+         self.__conn.rollback()
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+      rowcount = self.rowcount()
+      commited = rowcount -  self.__rowcount
+      self.__rowcount = rowcount
+      log.debug("RealTimeSamples: deleted %d rows", commited)
+      return  commited
 
 # ==========
 # Main Class
@@ -886,7 +892,10 @@ class DBWritter(Lazy):
       '''
       log.debug("work()")
       if self.__purge:
-         self.realtime.purge()
+         date_id = datePurgeFrom()
+         if date_id:
+            self.realtime.delete(date_id)
+            self.rtstats.delete(date_id)
 
    # ------------------------------------
    # Dimensions SQL Lookup helper methods
@@ -922,3 +931,12 @@ class DBWritter(Lazy):
    # Facts SQL Loader helper methods
    # -------------------------------
 
+   def datePurgeFrom(self):
+      '''Return date to purge from'''
+      now      = datetime.datetime.utcnow()
+      midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+      delta    = datetime.timedelta(minutes=2*self.period)
+      if now - midnight < delta:
+         return now.year*10000 + now.month*100 +now.day
+      else:
+         return None
