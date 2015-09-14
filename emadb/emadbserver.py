@@ -172,7 +172,7 @@ class EMADBServer(Server):
             item = self.__queue['avestat'].pop(0)
             self.dbwritter.processAverageStatus(item[0], item[1], item[2])
 
-    def onAveragesMessage(self, mqtt_id, payload):
+    def onAveragesHistoryMessage(self, mqtt_id, payload):
         self.__queue['averages'].append((mqtt_id, payload))
         if self.paused:
             log.warning("Holding %d averages messages on queue", 
@@ -180,7 +180,7 @@ class EMADBServer(Server):
             return
         while len(self.__queue['averages']):
             item = self.__queue['averages'].pop(0)
-            self.dbwritter.processSamples(item[0], item[1])
+            self.dbwritter.processAveragesHistory(item[0], item[1])
                 
     # --------------
     # Server Control

@@ -158,8 +158,6 @@ def xtFrequency(message):
 def xtMagVisual(message):
    '''Extract and Transform into Visual maginitued per arcsec 2'''
    return magnitude(xtFrequency(message))
-
-
    
 def xtTemperature(message):
    '''Extract and transform Temperature'''
@@ -174,7 +172,7 @@ def xtDewPoint(message):
    return float(message[SDPB:SDPE]) / 10
 
 def xtWindSpeed10(message):
-   '''Extract and transform Wind Speed moving average during 10 min.'''
+   '''Extract and transform Wind Speed average during 10 min.'''
    return float(message[SAAB:SAAE])
 
 def xtWindSpeed(message):
@@ -282,6 +280,100 @@ class MinMaxHistory(object):
          xtWindDirection(message), # wind_direction
          tstamp,                   # timestamp
          )
+
+
+
+# =====================
+# AveragesHistory Class
+# =====================
+
+
+class AveragesHistory(object):
+
+   def __init__(self, paren):
+      self.__paren = paren
+
+
+   def reload(self, conn):            
+      '''Reconfigures itself after a reload'''
+      self.__conn     = conn
+      self.__cursor   = self.__conn.cursor()
+      self.__rowcount = self.rowcount()
+      paren = self.__paren      # shortcut
+      # Build units cache
+      self.__relay = {
+         (RLY_CLOSED,RLY_CLOSED): paren.lkUnits(roof=RLY_CLOSED,aux=RLY_CLOSED),
+         (RLY_CLOSED,RLY_OPEN):   paren.lkUnits(roof=RLY_CLOSED, aux=RLY_OPEN),
+         (RLY_OPEN,RLY_CLOSED):   paren.lkUnits(roof=RLY_OPEN, aux=RLY_CLOSED),
+         (RLY_OPEN,RLY_OPEN):     paren.lkUnits(roof=RLY_OPEN, aux=RLY_OPEN),
+      }
+
+
+   def rowcount(self):
+      '''Find out the current row count'''
+      self.__cursor.execute("SELECT count(*) FROM AveragesHistory")
+      return self.__cursor.fetchone()[0]
+
+
+   def insert(self, rows):
+      '''Update the AveragesHistory Fact Table'''
+      log.debug("AveragesHistory: updating table")
+      try:
+         self.__cursor.executemany(
+            "INSERT OR FAIL INTO AveragesHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            rows)
+      except sqlite3.IntegrityError, e:
+         log.debug("AveragesHistory: overlapping rows")  
+      except sqlite3.OperationalError, e:
+         self.__conn.rollback()
+         if e.args[0] != DATABASE_LOCKED:
+            raise
+         log.critical("AveragesHistory: %d rows starting from %s cound not be written: %s",
+                   len(rows),
+                   rows[0][0:4],
+                   DATABASE_LOCKED
+                )
+      except sqlite3.Error, e:
+         log.error(e)
+         self.__conn.rollback()
+         raise
+      self.__conn.commit()   # commit anyway what was really updated
+      rowcount = self.rowcount()
+      commited = rowcount -  self.__rowcount
+      self.__rowcount = rowcount
+      log.info("AveragesHistory: commited rows (%d/%d)", commited, len(rows))
+      return  commited
+
+
+   def row(self, date_id, time_id, station_id, tstamp,  message):
+      '''Produces one averages history row to be inserted into the database'''
+
+      # Get values from cache
+      units_id = self.__relay.get((xtRoofRelay(message),xtAuxRelay(message)), -11)
+
+      return (
+         date_id,               # date_id
+         time_id,               # time_id
+         station_id,            # station_id
+         units_id,              # units_id
+         xtVoltage(message),    # voltage
+         xtWetLevel(message),   # wet
+         xtCloudLevel(message), # cloudy
+         xtCalPressure(message),   # cal_pressure
+         xtAbsPressure(message),   # abs_pressure
+         xtRain(message),          # rain
+         xtIrradiation(message),   # irradiation
+         xtMagVisual(message),     # vis_magnitude
+         xtFrequency(message),     # frequency
+         xtTemperature(message),   # temperature
+         xtHumidity(message),      # rel_humidity
+         xtDewPoint(message),      # dew_point
+         xtWindSpeed(message),     # wind_speed
+         xtWindDirection(message), # wind_direction
+         tstamp,                   # timestamp
+         )
+
+
 
 
 # =====================
@@ -566,6 +658,7 @@ class DBWritter(Lazy):
       self.__conn     = None
       self.minmax     = MinMaxHistory(self)
       self.realtime   = RealTimeSamples(self)
+      self.aver5min   = AveragesHistory(self)
       self.histats    = HistoryStats(self)
       self.rtstats    = RealTimeStats(self)
       srv.addLazy(self)
@@ -620,6 +713,7 @@ class DBWritter(Lazy):
             self.__conn.rollback()
          raise
       self.minmax.reload(self.__conn)
+      self.aver5min.reload(self.__conn)
       self.realtime.reload(self.__conn)
       self.histats.reload(self.__conn)
       self.rtstats.reload(self.__conn)
@@ -636,7 +730,7 @@ class DBWritter(Lazy):
 
    def processMinMax(self, mqtt_id, payload):
       '''extract MinMax History data and load into its table'''
-      log.debug("Received minmax message from station %s", mqtt_id)
+      log.debug("Received minmax history message from station %s", mqtt_id)
       station_id = self.lkStation(mqtt_id)
       if station_id == UNKNOWN_STATION_ID:
          log.warn("Ignoring minmax message from unregistered station %s", 
@@ -754,8 +848,28 @@ class DBWritter(Lazy):
    # Process 5 min. averaged Bulk Dump
    # ----------------------------------
 
-   def processAverages(self, mqtt_id, payload):
-      log.debug("Received averages message from station %s", mqtt_id)
+   def processAveragesHistory(self, mqtt_id, payload):
+      log.debug("Received averages history message from station %s", mqtt_id)
+      station_id = self.lkStation(mqtt_id)
+      if station_id == UNKNOWN_STATION_ID:
+         log.warn("Ignoring averags history message from unregistered station %s", 
+                  mqtt_id)
+         return
+      rows = []
+      message = payload.split('\n')
+      msglen = len(message)
+      for i in range(0 , msglen/2):
+         date_id, time_id, t0 = xtDateTime(message[2*i+1])
+         tsmp = t0.strftime("%Y-%m-%d %H:%M:%S")
+         r = self.aver5min.row(date_id, time_id, station_id, tsmp, message[2*i])
+         rows.append(r)
+      commited = self.aver5min.insert(rows)
+      if self.__stats:
+         # Insert record into the statistics table
+         self.histats.insert(
+            self.histats.rows(station_id, TYP_AVER, len(rows), commited)
+         )
+
 
 
    # ----------------------------

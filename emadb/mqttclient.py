@@ -34,8 +34,6 @@ from mqttsubscriber import MQTTGenericSubscriber
 
 class MQTTClient(MQTTGenericSubscriber):
 
-   def __init__(self, srv, parser):
-      MQTTGenericSubscriber.__init__(self, srv, parser)
 
    def onMessage(self, msg, tstamp):
       log.debug("Received message on topic = %s, QoS = %d, retain = %s",
@@ -43,8 +41,8 @@ class MQTTClient(MQTTGenericSubscriber):
       id = msg.topic.split('/')[1]
       if msg.topic.endswith("history/minmax"):
          self.srv.onMinMaxMessage(id, msg.payload)
-      elif msg.topic.endswith("history/samples"):
-         self.srv.onSamplesMessage(id, msg.payload)
+      elif msg.topic.endswith("history/average"):
+         self.srv.onAveragesHistoryMessage(id, msg.payload)
       elif msg.topic.endswith("current/status"):
          self.srv.onCurrentStatusMessage(id, msg.payload, tstamp)
       elif msg.topic.endswith("average/status"):
