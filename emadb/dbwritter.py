@@ -645,9 +645,6 @@ class DBWritter(Lazy):
       rows = []
       message = payload.split('\n')
       msglen = len(message)
-      if msglen != 72:
-         log.error("Wrong minmax message from station %s", mqtt_id)
-         return
       for i in range(0 , msglen/3):
          date_id, time_id, t0 = xtDateTime(message[3*i+2])
          tsmp = t0.strftime("%Y-%m-%d %H:%M:%S")
