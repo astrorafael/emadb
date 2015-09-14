@@ -171,7 +171,7 @@ def xtDewPoint(message):
    '''Extract and transform Dew Point'''
    return float(message[SDPB:SDPE]) / 10
 
-def xtWindSpeed10(message):
+def xtWindSpeed10m(message):
    '''Extract and transform Wind Speed average during 10 min.'''
    return float(message[SAAB:SAAE])
 
@@ -226,7 +226,7 @@ class MinMaxHistory(object):
       log.debug("MinMaxHistory: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO MinMaxHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.debug("MinMaxHistory: overlapping rows")  
@@ -277,6 +277,7 @@ class MinMaxHistory(object):
          xtHumidity(message),      # rel_humidity
          xtDewPoint(message),      # dew_point
          xtWindSpeed(message),     # wind_speed
+         xtWindSpeed10m(message),  # wind_speed10m
          xtWindDirection(message), # wind_direction
          tstamp,                   # timestamp
          )
@@ -320,7 +321,7 @@ class AveragesHistory(object):
       log.debug("AveragesHistory: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO AveragesHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO AveragesHistory VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.debug("AveragesHistory: overlapping rows")  
@@ -369,6 +370,7 @@ class AveragesHistory(object):
          xtHumidity(message),      # rel_humidity
          xtDewPoint(message),      # dew_point
          xtWindSpeed(message),     # wind_speed
+         xtWindSpeed10m(message),  # wind_speed10m
          xtWindDirection(message), # wind_direction
          tstamp,                   # timestamp
          )
@@ -417,7 +419,7 @@ class RealTimeSamples(object):
       log.debug("RealTimeSamples: updating table")
       try:
          self.__cursor.executemany(
-            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            "INSERT OR FAIL INTO RealTimeSamples VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             rows)
       except sqlite3.IntegrityError, e:
          log.warn("RealTimeSamples: overlapping rows")
@@ -468,6 +470,7 @@ class RealTimeSamples(object):
          xtHumidity(message),      # rel_humidity
          xtDewPoint(message),      # dew_point
          xtWindSpeed(message),     # wind_speed
+         xtWindSpeed10m(message),  # wind_speed10m
          xtWindDirection(message), # wind_direction
          tstamp,                   # timestamp
       )
@@ -919,7 +922,3 @@ class DBWritter(Lazy):
    # Facts SQL Loader helper methods
    # -------------------------------
 
-
-
-if __name__ == "__main__":
-      pass

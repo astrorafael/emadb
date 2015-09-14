@@ -417,24 +417,24 @@ class Units(object):
             """
             CREATE TABLE IF NOT EXISTS Units
             (
-            units_id           INTEGER PRIMARY KEY, 
-            roof_relay         TEXT,
-            aux_relay          TEXT,
-            voltage_units      TEXT,
-            wet_units          TEXT,
-            cloudy_units       TEXT,
-            cal_pressure_units TEXT,
-            abs_pressure_units TEXT,
-            rain_units         TEXT,
-            irradiation_units  TEXT,
-            magnitude_units    TEXT,
-            frequency_units    TEXT,
-            temperature_units  TEXT,
-            rel_humidity_units TEXT,
-            dew_point_units    TEXT,
-            wind_speed_units   TEXT,
-            wind_direction_units TEXT,
-            lag_units          TEXT
+            units_id             INTEGER PRIMARY KEY, 
+            roof_relay           TEXT,
+            aux_relay            TEXT,
+            voltage_units        TEXT,
+            wet_units            TEXT,
+            cloudy_units         TEXT,
+            cal_pressure_units   TEXT,
+            abs_pressure_units   TEXT,
+            rain_units           TEXT,
+            irradiation_units    TEXT,
+            magnitude_units      TEXT,
+            frequency_units      TEXT,
+            temperature_units    TEXT,
+            rel_humidity_units   TEXT,
+            dew_point_units      TEXT,
+            wind_speed_units     TEXT,
+            wind_speed10m_units  TEXT,
+            wind_direction_units TEXT
             );
             """
         )
@@ -504,6 +504,7 @@ class MinMaxHistory(object):
             rel_humidity       REAL,
             dew_point          REAL,
             wind_speed         REAL,
+            wind_speed10m      REAL,
             wind_direction     INTEGER,
             timestamp          TEXT,
             PRIMARY KEY (date_id, time_id, station_id, type_id)
@@ -554,6 +555,7 @@ class RealTimeSamples(object):
             rel_humidity       REAL,
             dew_point          REAL,
             wind_speed         REAL,
+            wind_speed10m      REAL,
             wind_direction     INTEGER,
             timestamp          TEXT,
             PRIMARY KEY (date_id, time_id, station_id, type_id)
@@ -602,6 +604,7 @@ class AveragesHistory(object):
             rel_humidity       REAL,
             dew_point          REAL,
             wind_speed         REAL,
+            wind_speed10m      REAL,
             wind_direction     INTEGER,
             timestamp          TEXT,
             PRIMARY KEY (date_id, time_id, station_id)

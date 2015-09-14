@@ -23,8 +23,8 @@
 #            rel_humidity            TEXT,
 #            dew_point_units         TEXT,
 #            wind_speed_units        TEXT,
+#            wind_speed10m_units     TEXT,
 #            wind_direction_units    TEXT,
-#            lag_unts                TEXT
 #    ], 
 # ---------------------------------------------------------------------------
 
@@ -70,8 +70,8 @@
 	"%",
 	"deg C",
 	"Km/h",
-	"degrees",
-	"sec"
+	"Km/h",
+	"degrees"
     ],
 
     [  
@@ -91,8 +91,8 @@
 	"%",
 	"deg C",
 	"Km/h",
-	"degrees",
-	"sec"
+	"Km/h",
+	"degrees"
     ],
 
     [  
@@ -112,8 +112,8 @@
 	"%",
 	"deg C",
 	"Km/h",
-	"degrees",
-	"sec"
+	"Km/h",
+	"degrees"
     ],
 
     [  
@@ -133,7 +133,7 @@
 	"%",
 	"deg C",
 	"Km/h",
-	"degrees",
-	"sec"
+	"Km/h",
+	"degrees"
     ]
 ]
