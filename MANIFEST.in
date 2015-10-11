@@ -1,2 +1,7 @@
 include versioneer.py
 include emadb/_version.py
+include README.md
+include init.d/emadb
+include default/emadb
+include config/*
+include scripts/*
