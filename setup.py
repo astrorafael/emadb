@@ -68,7 +68,9 @@ if os.name == "posix":
         data_files       = [ 
           ('/etc/init.d' ,   ['init.d/emadb']),
           ('/etc/default',   ['default/emadb']),
-          ('/etc/ema',       ['config/config']),
+          ('/etc/emadb',       ['config/config']),
+          ('/etc/emadb',       ['config/units.json']),
+          ('/etc/emadb',       ['config/stations.json']),
           ('/usr/local/bin', ['scripts/emadb', 'scripts/emadbload']),
           ]
         )
@@ -94,6 +96,9 @@ elif os.name == "nt":
         data_files       = [ 
           (r'C:\emadb\dbase' ,   ['dbase/placeholder.txt']),
           (r'C:\emadb\log',      ['log/placeholder.txt']),
+          (r'C:\emadb\config',       ['config/config.ini']),
+          (r'C:\emadb\config',      ['config/units.json']),
+          (r'C:\emadb\config',       ['config/stations.json']),
           ]
         )
 
