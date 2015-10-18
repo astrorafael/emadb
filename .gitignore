@@ -12,5 +12,3 @@ emadb/server/*.pyo
 emadb/server/*~
 my*
 *.db
-dbase
-log

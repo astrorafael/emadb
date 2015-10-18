@@ -1,3 +1,4 @@
+import os
 from setuptools import setup, Extension
 import versioneer
 
@@ -49,19 +50,60 @@ classifiers = [
     'Development Status :: 4 - Beta',
 ]
 
+if os.name == "posix":
 
+  setup(name             = 'emadb',
+        version          = versioneer.get_version(),
+        cmdclass         = versioneer.get_cmdclass(),
+        author           = 'Rafael Gonzalez',
+        author_email     = 'astrorafael@yahoo.es',
+        description      = 'A package to collect measurements published by EMA using MQTT and a SQlite database',
+        long_description = long_description,
+        license          = 'MIT',
+        keywords         = 'EMA Database Meteorology Astronomy Python RaspberryPi',
+        url              = 'http://github.com/astrorafael/emadb/',
+        classifiers      = classifiers,
+        packages         = ["emadb","emadb.server"],
+        install_requires = ['paho-mqtt'],
+        data_files       = [ 
+          ('/etc/init.d' ,   ['init.d/emadb']),
+          ('/etc/default',   ['default/emadb']),
+          ('/etc/emadb',       ['config/config']),
+          ('/etc/emadb',       ['config/units.json']),
+          ('/etc/emadb',       ['config/stations.json']),
+          ('/usr/local/bin', ['scripts/emadb', 'scripts/emadbload']),
+          ]
+        )
 
-setup(name             = 'emadb',
-      version          = versioneer.get_version(),
-      cmdclass         = versioneer.get_cmdclass(),
-      author           = 'Rafael Gonzalez',
-      author_email     = 'astrorafael@yahoo.es',
-      description      = 'A package to collect measurements published by EMA using MQTT and a SQlite database',
-      long_description = long_description,
-      license          = 'MIT',
-      keywords         = 'EMA Database Meteorology Astronomy Python RaspberryPi',
-      url              = 'http://github.com/astrorafael/emadb/',
-      classifiers      = classifiers,
-      packages         = ["emadb","emadb.server"],
-      install_requires = ['paho-mqtt']
-      )
+elif os.name == "nt":
+
+  import sys
+  import shlex
+
+  setup(name             = 'emadb',
+        version          = versioneer.get_version(),
+        cmdclass         = versioneer.get_cmdclass(),
+        author           = 'Rafael Gonzalez',
+        author_email     = 'astrorafael@yahoo.es',
+        description      = 'A package to collect measurements published by EMA using MQTT and a SQlite database',
+        long_description = long_description,
+        license          = 'MIT',
+        keywords         = 'EMA Database Meteorology Astronomy Python RaspberryPi',
+        url              = 'http://github.com/astrorafael/emadb/',
+        classifiers      = classifiers,
+        packages         = ["emadb","emadb.server"],
+        install_requires = ['paho-mqtt'],
+        data_files       = [ 
+          (r'C:\emadb\dbase' ,   ['dbase/placeholder.txt']),
+          (r'C:\emadb\log',      ['log/placeholder.txt']),
+          (r'C:\emadb\config',       ['config/config.ini']),
+          (r'C:\emadb\config',      ['config/units.json']),
+          (r'C:\emadb\config',       ['config/stations.json']),
+          ]
+        )
+
+  args = shlex.split( "python -m emadb --startup auto install")
+  subprocess.call(args)
+
+else:
+  pass
