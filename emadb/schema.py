@@ -54,17 +54,166 @@ def julian_day(date):
     m = date.month + 12*a - 3
     return date.day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045
 
-def fromJSON(file_path):
+def fromJSON(file_path, default_var):
     '''Read pre-populated JSON data from a file'''
     lines = []
     if not os.path.exists(file_path):
-        log.error("No JSON file found in %s.", file_path)
-
+        log.warning("No JSON file found in %s.", file_path)
+        log.warning("loading defaults %s.", file_path)
+        return default_var
+        
+    log.info("loading from existing file %s", file_path)
     with open(file_path,'r') as fd:
         for line in fd:
             if not line.startswith('#'):
                 lines.append(line)
     return  json.loads('\n'.join(lines))
+
+
+# ---------------------------------------------
+# Default Units data if no JSON file is present
+# ---------------------------------------------
+
+DEFAULT_UNITS = [
+
+    [  
+    -1, 
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown",
+    "Unknown"
+    ],
+
+    [  
+    0, 
+    "Closed",
+    "Closed",
+    "V",
+    "%",
+    "%",
+    "HPa",
+    "HPa",
+    "mm",
+    "%",
+    "Mv/arcsec^2",
+    "Hz",
+    "deg C",
+    "%",
+    "deg C",
+    "Km/h",
+    "Km/h",
+    "degrees"
+    ],
+
+    [  
+    1, 
+    "Open",
+    "Closed",
+    "V",
+    "%",
+    "%",
+    "HPa",
+    "HPa",
+    "mm",
+    "%",
+    "Mv/arcsec^2",
+    "Hz",
+    "deg C",
+    "%",
+    "deg C",
+    "Km/h",
+    "Km/h",
+    "degrees"
+    ],
+
+    [  
+    2, 
+    "Closed",
+    "Open",
+    "V",
+    "%",
+    "%",
+    "HPa",
+    "HPa",
+    "mm",
+    "%",
+    "Mv/arcsec^2",
+    "Hz",
+    "deg C",
+    "%",
+    "deg C",
+    "Km/h",
+    "Km/h",
+    "degrees"
+    ],
+
+    [  
+    3, 
+    "Open",
+    "Open",
+    "V",
+    "%",
+    "%",
+    "HPa",
+    "HPa",
+    "mm",
+    "%",
+    "Mv/arcsec^2",
+    "Hz",
+    "deg C",
+    "%",
+    "deg C",
+    "Km/h",
+    "Km/h",
+    "degrees"
+    ],
+]
+
+# ------------------------------------------------
+# Default Stations data if no JSON file is present
+# ------------------------------------------------
+
+DEFAULT_STATIONS = [
+    [
+        -1, 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown", 
+        "Unknown"
+    ], 
+    [
+        1, 
+        "emapi", 
+        "Estacion EMA de pruebas", 
+        "Cristobal Garcia", 
+        "Coslada", 
+        "Madrid", 
+        0.0, 
+        "00d 00' 00\"", 
+        0.0, 
+        "00d 00' 00\"", 
+        0.0
+    ]
+]
 
 
 # ============================================================================ #
@@ -324,7 +473,7 @@ class Station(object):
 
     def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        return fromJSON( os.path.join(self.__json_dir, Station.FILE))
+        return fromJSON( os.path.join(self.__json_dir, Station.FILE), DEFAULT_STATIONS)
 
 
 # ============================================================================ #
@@ -460,7 +609,7 @@ class Units(object):
 
     def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        return fromJSON( os.path.join(self.__json_dir, Units.FILE))
+        return fromJSON( os.path.join(self.__json_dir, Units.FILE), DEFAULT_UNITS)
 
 # ============================================================================ #
 #                               MINMAX TABLE (PERIODIC SNAPSHOT FACT)
