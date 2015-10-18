@@ -64,7 +64,7 @@ if os.name == "posix":
         url              = 'http://github.com/astrorafael/emadb/',
         classifiers      = classifiers,
         packages         = ["emadb","emadb.server"],
-        install_requires = ['paho-mqtt']
+        install_requires = ['paho-mqtt'],
         data_files       = [ 
           ('/etc/init.d' ,   ['init.d/emadb']),
           ('/etc/default',   ['default/emadb']),
@@ -90,14 +90,14 @@ elif os.name == "nt":
         url              = 'http://github.com/astrorafael/emadb/',
         classifiers      = classifiers,
         packages         = ["emadb","emadb.server"],
-        install_requires = ['paho-mqtt']
+        install_requires = ['paho-mqtt'],
         data_files       = [ 
-          (r'C:\emadb\dbase' ,   ['dbase/placeholdet.txt']),
-          (r'C:\emadb\log',      ['log/placeholdet.txt']),
+          (r'C:\emadb\dbase' ,   ['dbase/placeholder.txt']),
+          (r'C:\emadb\log',      ['log/placeholder.txt']),
           ]
         )
 
-  args = shlex.split(sys.executable + " -m emadb --startup auto install")
+  args = shlex.split( "python -m emadb --startup auto install")
   subprocess.call(args)
 
 else:
