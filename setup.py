@@ -75,7 +75,10 @@ if os.name == "posix":
 
 elif os.name == "nt":
 
-   setup(name             = 'emadb',
+  import sys
+  import shlex
+
+  setup(name             = 'emadb',
         version          = versioneer.get_version(),
         cmdclass         = versioneer.get_cmdclass(),
         author           = 'Rafael Gonzalez',
@@ -93,5 +96,9 @@ elif os.name == "nt":
           (r'C:\emadb\log',      ['log/placeholdet.txt']),
           ]
         )
+
+  args = shlex.split(sys.executable + " -m emadb --startup auto install")
+  subprocess.call(args)
+
 else:
   pass
