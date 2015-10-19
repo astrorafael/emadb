@@ -74,24 +74,24 @@ class WindowsService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         '''Service Stop entry point'''
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        log.info("Stopping  %s Windows service", __version__ )
-        logger.sysLogInfo("Stopping %s Windows service" % __version__ )
+        log.info("Stopping emadb %s Windows service", __version__ )
+        logger.sysLogInfo("Stopping emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.stop)
 
 
     def SvcPause(self):
         '''Service Pause entry point'''
         self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
-        log.info("Pausing  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Pausing %s Windows service" % __version__ )
+        log.info("Pausing  emadb %s Windows service",  __version__ )
+        logger.sysLogInfo("Pausing emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.pause)
 
         
     def SvcContinue(self):
         '''Service Continue entry point'''
         self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
-        log.info("Resuming  %s Windows service", __version__  )
-        logger.sysLogInfo("Resuming %s Windows service" % __version__ )
+        log.info("Resuming emadb %s Windows service", __version__  )
+        logger.sysLogInfo("Resuming emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.resume)
 
         
@@ -110,12 +110,12 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         '''Service Run entry point'''
-        logger.sysLogInfo("Starting %s Windows service" % __version__ )
+        logger.sysLogInfo("Starting emadb %s Windows service" % __version__ )
         self.server.run()
         self.server.stop()
-        logger.sysLogInfo("%s Windows service stopped" % __version__ )
+        logger.sysLogInfo("emadb %s Windows service stopped" % __version__ )
 
-    
+     
 def ctrlHandler(ctrlType):
     return True
 
