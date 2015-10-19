@@ -42,7 +42,7 @@ import cmdline
 
 from server      import logger
 from emadbserver import EMADBServer
-from default     import VERSION_STRING
+from .     import __version__
 
 log = logging.getLogger('winservice')
 
@@ -54,8 +54,8 @@ class WindowsService(win32serviceutil.ServiceFramework):
     Windows service for the EMA database.
     """
     _svc_name_            = "emadb"
-    _svc_display_name_    = "EMA database"
-    _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
+    _svc_display_name_    = "EMA database (%s)" % __version__ 
+    _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database" 
 
     
     def __init__(self, args):
@@ -74,8 +74,8 @@ class WindowsService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         '''Service Stop entry point'''
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        log.info("Stopping  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Stopping %s Windows service" % VERSION_STRING)
+        log.info("Stopping  %s Windows service", __version__ )
+        logger.sysLogInfo("Stopping %s Windows service" % __version__ )
         win32event.SetEvent(self.stop)
 
 
@@ -83,15 +83,15 @@ class WindowsService(win32serviceutil.ServiceFramework):
         '''Service Pause entry point'''
         self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
         log.info("Pausing  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Pausing %s Windows service" % VERSION_STRING)
+        logger.sysLogInfo("Pausing %s Windows service" % __version__ )
         win32event.SetEvent(self.pause)
 
         
     def SvcContinue(self):
         '''Service Continue entry point'''
         self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
-        log.info("Resuming  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Resuming %s Windows service" % VERSION_STRING)
+        log.info("Resuming  %s Windows service", __version__  )
+        logger.sysLogInfo("Resuming %s Windows service" % __version__ )
         win32event.SetEvent(self.resume)
 
         
@@ -110,10 +110,10 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         '''Service Run entry point'''
-        logger.sysLogInfo("Starting %s Windows service" % VERSION_STRING)
+        logger.sysLogInfo("Starting %s Windows service" % __version__ )
         self.server.run()
         self.server.stop()
-        logger.sysLogInfo("%s Windows service stopped" % VERSION_STRING)
+        logger.sysLogInfo("%s Windows service stopped" % __version__ )
 
     
 def ctrlHandler(ctrlType):
