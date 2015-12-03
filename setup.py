@@ -44,9 +44,9 @@ classifiers = [
     'Operating System :: Microsoft :: Windows :: Windows XP',
     'Operating System :: POSIX :: Linux',
     'Programming Language :: Python :: 2.7',
-    'Programming Language :: SQL'
-    'Topic :: Scientific/Engineering :: Astronomy'
-'    Topic :: Scientific/Engineering :: Atmospheric Science'
+    'Programming Language :: SQL',
+    'Topic :: Scientific/Engineering :: Astronomy',
+    'Topic :: Scientific/Engineering :: Atmospheric Science',
     'Development Status :: 4 - Beta',
 ]
 
