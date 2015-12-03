@@ -5,3 +5,4 @@ include init.d/emadb
 include default/emadb
 include config/*
 include scripts/*
+include dbase/placehonder.txt
