@@ -6,3 +6,4 @@ include default/emadb
 include config/*
 include scripts/*
 include dbase/*
+include log/*
