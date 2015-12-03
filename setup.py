@@ -92,9 +92,9 @@ elif os.name == "nt":
         packages         = ["emadb","emadb.server"],
         install_requires = ['paho-mqtt'],
         data_files       = [ 
-          (r'C:\emadb\dbase' ,   ['dbase/placeholder.txt']),
-          (r'C:\emadb\log',      ['log/placeholder.txt']),
-          (r'C:\emadb\config',   ['config/config.ini']),
+          (r'C:\emadb\dbase' ,   ['dbase\placeholder.txt']),
+          (r'C:\emadb\log',      ['log\placeholder.txt']),
+          (r'C:\emadb\config',   ['config\config.ini']),
           ]
         )
 
