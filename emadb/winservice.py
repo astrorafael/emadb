@@ -42,8 +42,12 @@ import cmdline
 
 from server      import logger
 from emadbserver import EMADBServer
+<<<<<<< HEAD
 from default     import VERSION_STRING
 from .           import __version__
+=======
+from .     import __version__
+>>>>>>> f714781ca239bb4cc82af7913cc12620c1fad15b
 
 log = logging.getLogger('winservice')
 
@@ -75,24 +79,24 @@ class WindowsService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         '''Service Stop entry point'''
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        log.info("Stopping  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Stopping %s Windows service" % VERSION_STRING)
+        log.info("Stopping emadb %s Windows service", __version__ )
+        logger.sysLogInfo("Stopping emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.stop)
 
 
     def SvcPause(self):
         '''Service Pause entry point'''
         self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
-        log.info("Pausing  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Pausing %s Windows service" % VERSION_STRING)
+        log.info("Pausing  emadb %s Windows service",  __version__ )
+        logger.sysLogInfo("Pausing emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.pause)
 
         
     def SvcContinue(self):
         '''Service Continue entry point'''
         self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
-        log.info("Resuming  %s Windows service", VERSION_STRING )
-        logger.sysLogInfo("Resuming %s Windows service" % VERSION_STRING)
+        log.info("Resuming emadb %s Windows service", __version__  )
+        logger.sysLogInfo("Resuming emadb %s Windows service" % __version__ )
         win32event.SetEvent(self.resume)
 
         
@@ -111,12 +115,12 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         '''Service Run entry point'''
-        logger.sysLogInfo("Starting %s Windows service" % VERSION_STRING)
+        logger.sysLogInfo("Starting emadb %s Windows service" % __version__ )
         self.server.run()
         self.server.stop()
-        logger.sysLogInfo("%s Windows service stopped" % VERSION_STRING)
+        logger.sysLogInfo("emadb %s Windows service stopped" % __version__ )
 
-    
+     
 def ctrlHandler(ctrlType):
     return True
 
