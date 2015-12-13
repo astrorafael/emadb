@@ -42,12 +42,9 @@ import cmdline
 
 from server      import logger
 from emadbserver import EMADBServer
-<<<<<<< HEAD
 from default     import VERSION_STRING
 from .           import __version__
-=======
-from .     import __version__
->>>>>>> f714781ca239bb4cc82af7913cc12620c1fad15b
+
 
 log = logging.getLogger('winservice')
 
