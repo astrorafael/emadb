@@ -892,7 +892,7 @@ class DBWritter(Lazy):
       '''
       log.debug("work()")
       if self.__purge:
-         date_id = datePurgeFrom()
+         date_id = self.datePurgeFrom()
          if date_id:
             self.realtime.delete(date_id)
             self.rtstats.delete(date_id)
