@@ -43,6 +43,7 @@ import cmdline
 from server      import logger
 from emadbserver import EMADBServer
 from default     import VERSION_STRING
+from .           import __version__
 
 log = logging.getLogger('winservice')
 
@@ -54,7 +55,7 @@ class WindowsService(win32serviceutil.ServiceFramework):
     Windows service for the EMA database.
     """
     _svc_name_            = "emadb"
-    _svc_display_name_    = "EMA database"
+    _svc_display_name_    = "EMA database %s" % __version__
     _svc_description_    = "An MQTT Client for EMA weather stations that stores data into a SQLite database"
 
     
