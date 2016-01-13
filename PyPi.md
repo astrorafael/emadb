@@ -20,5 +20,5 @@ to upload them to GitHub and mark releases there as well.
 	
 4. Package and Upload at the same time 
 
-	`python setup.py sdist upload`
+	`sudo python setup.py sdist upload`
 
