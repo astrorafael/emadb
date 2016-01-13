@@ -586,6 +586,11 @@ class RealTimeStats(object):
       }      
 
 
+   def rowcount(self):
+      '''Find out the current row count'''
+      self.__cursor.execute("SELECT count(*) FROM RealTimeStats")
+      return self.__cursor.fetchone()[0]
+
    def insert(self, rows):
       '''Update the RealTimeStats Fact Table'''
       log.debug("RealTimeStats: updating table")
