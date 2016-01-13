@@ -22,3 +22,17 @@ to upload them to GitHub and mark releases there as well.
 
 	`sudo python setup.py sdist upload`
 
+# Updating GitHub repo
+
+1. Merge your branch into master
+
+	`git checkout master`
+	`git merge develop'
+
+2. Push master branch to GitHub
+
+	`git push origin master`
+
+3. Push tags
+
+	`git push --tags origin master` 
